@@ -2,22 +2,40 @@ package org.firstinspires.ftc.teamcode.opmode.auto;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.CommandScheduler;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.SelectCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.AutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.HorizontalPositionCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.TurretPositionCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 import org.firstinspires.ftc.teamcode.common.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.common.vision.AprilTagDetector;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Autonomous(name="Left Mid Cycle")
 @Config
 public class LeftMidCycleAuto extends LinearOpMode {
     Robot robot;
+    public int currId = 2;
+    public boolean park = false;
+
+    public enum Location {
+        LEFT, MIDDLE, RIGHT
+    }
+    Location location = Location.MIDDLE;
+    TrajectorySequence traj1;
+    TrajectorySequence left;
+    TrajectorySequence right;
 
     @Override
     public void runOpMode() throws InterruptedException{
@@ -31,47 +49,80 @@ public class LeftMidCycleAuto extends LinearOpMode {
         AutoMidCycleCommand.setTolerance(30);
 
 
-        TrajectorySequence traj1 = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+        traj1 = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
                 .forward(50)
 
                 .build();
 
+        left = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+                .strafeLeft(25)
+
+                .build();
+
+        right = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+                .strafeRight(25)
+
+                .build();
 
 
         while(!isStarted()){
             robot.vision.runAprilTag();
+            telemetry.update();
+            currId = robot.vision.getAprilTag().id;
+
+            switch (currId){
+                case 1:
+                    location = Location.LEFT;
+                    break;
+                case 2:
+                    location = Location.MIDDLE;
+                    break;
+                default:
+                    location = Location.RIGHT;
+                    break;
+            }
+
         }
 
         waitForStart();
-        robot.intake.update(IntakeSubsystem.ClawState.OPEN);
+        robot.horizontal.setPos(0.1);
+        robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         robot.drive.followTrajectorySequenceAsync(traj1);
         CommandScheduler.getInstance().schedule(
                 new SequentialCommandGroup(
-                        new ParallelCommandGroup(
-                                new WaitCommand(3000).andThen(new SequentialCommandGroup(
-                                        //cycle
-                                        new AutoMidCycleCommand(robot),
-                                        new AutoMidCycleCommand(robot),
-                                        new AutoMidCycleCommand(robot),
-                                        new AutoMidCycleCommand(robot),
-                                        new AutoMidCycleCommand(robot)
-                                ))
+                        new WaitCommand(3000).andThen(new SequentialCommandGroup(
+                                //cycle
+                                new AutoMidCycleCommand(robot),
+                                new AutoMidCycleCommand(robot),
+                                new AutoMidCycleCommand(robot),
+                                new AutoMidCycleCommand(robot),
+                                new AutoMidCycleCommand(robot),
 
-                        )
+                                new ParallelCommandGroup(
+                                        new InstantCommand(() -> goPark()),
+                                        new VerticalPositionCommand(robot.vertical,0,30,5000),
+                                        new TurretPositionCommand(robot.turret,0,30,5000),
+                                        new HorizontalPositionCommand(robot.horizontal,0)
+
+                                )
+                        ))
                 )
         );
 
         while (opModeIsActive()){
             robot.read();
-            //parking code
+
             CommandScheduler.getInstance().run();
 
-            robot.turret.loop();
-            robot.vertical.loop();
-            robot.horizontal.loop();
+            robot.loop();
 
             robot.write();
         }
+    }
+
+    public void goPark(){
+        if(currId == 1) robot.drive.followTrajectorySequenceAsync(left);
+        if(currId == 3) robot.drive.followTrajectorySequenceAsync(right);
     }
 
 

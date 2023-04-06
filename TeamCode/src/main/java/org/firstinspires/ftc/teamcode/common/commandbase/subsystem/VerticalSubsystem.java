@@ -26,6 +26,7 @@ public class VerticalSubsystem extends SubsystemBase {
     public static double maxVel = 4000;
     public static double maxAcc = 2200;
 
+
     private ElapsedTime voltageTimer;
     private VoltageSensor voltageSensor;
     private double voltage;
@@ -35,8 +36,13 @@ public class VerticalSubsystem extends SubsystemBase {
     private int targetPosition = 0;
 
     private boolean isAuto = false;
+
     //ty kookybotz
     public VerticalSubsystem(HardwareMap hardwareMap, boolean isAuto){
+        //@TODO HARDWARE MAP DUMBO
+        leftSlide = hardwareMap.get(DcMotorEx.class, "leftSlide");
+        rightSlide = hardwareMap.get(DcMotorEx.class, "rightSlide");
+
         leftSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -47,7 +53,6 @@ public class VerticalSubsystem extends SubsystemBase {
 
         leftSlide.setDirection(DcMotor.Direction.REVERSE);
         rightSlide.setDirection(DcMotor.Direction.REVERSE);
-
 
         controller = new ProfiledPIDController(P,I,D, new TrapezoidProfile.Constraints(maxVel,maxAcc));
         controller.setPID(P, I, D);
@@ -61,7 +66,10 @@ public class VerticalSubsystem extends SubsystemBase {
         this.isAuto = isAuto;
     }
 
+
     public void loop() {
+        if(!isAuto) return; //teleop doesnt use PID
+
         this.controller.setPID(P, I, D);
 
         if (voltageTimer.seconds() > 5) {
@@ -76,17 +84,11 @@ public class VerticalSubsystem extends SubsystemBase {
         targetPosition = (int) position;
     }
 
-    public void setVerticalFactor(double factor) {
-        double slideAddition = 20 * factor;
-        double newPosition = verticalPosition + slideAddition;
-
-        if(!isAuto && leftSlide.getCurrentPosition() < 0){
-            //spool safety
-            targetPosition = 50;
-        }else{
-            targetPosition = (int) newPosition;
-        }
+    public void setPower(double power) {
+        this.power = power;
     }
+
+    //======
 
     public void read() {
         verticalPosition = rightSlide.getCurrentPosition();
@@ -102,6 +104,8 @@ public class VerticalSubsystem extends SubsystemBase {
         rightSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
     }
+
+    public double getPower() { return power;}
 
     public int getPos() {
         return verticalPosition;

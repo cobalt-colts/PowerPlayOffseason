@@ -117,6 +117,10 @@ public class AprilTagDetector extends LinearOpMode {
         telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
     }
 
+    public AprilTagDetection getAprilTag(){
+        return tagOfInterest;
+    }
+
     @Override
     public void runOpMode(){}
 }

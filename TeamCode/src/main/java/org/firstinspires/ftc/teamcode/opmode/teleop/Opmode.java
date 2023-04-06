@@ -7,17 +7,19 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
-public class TeleOp extends CommandOpMode {
+@TeleOp
+public class Opmode extends CommandOpMode {
     private Robot robot;
     private ElapsedTime timer;
 
-    GamepadEx driverOp = new GamepadEx(gamepad1);
-    GamepadEx toolOp = new GamepadEx(gamepad2);
+    GamepadEx driverOp;
+    GamepadEx toolOp;
 
     @Override
     public void initialize(){
@@ -27,7 +29,8 @@ public class TeleOp extends CommandOpMode {
         robot.reset();
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(),this.telemetry);
 
-
+        driverOp = new GamepadEx(gamepad1);
+        toolOp = new GamepadEx(gamepad2);
     }
 
 
@@ -41,13 +44,19 @@ public class TeleOp extends CommandOpMode {
 
         robot.read();
 
+        //drivetrain
         robot.fieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX(), driverOp.getButton(GamepadKeys.Button.X));
 
-        robot.turret.setTurretFactor(toolOp.getRightX());
-        robot.vertical.setVerticalFactor(-toolOp.getLeftY());
-        robot.horizontal.setHorizontalFactor(toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) ?
-                -toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) : toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) );
+        //turret
+        robot.turret.setPower(0.5 * toolOp.getRightX());
 
+        //vertical
+        robot.vertical.setPower(-toolOp.getLeftY());
+
+        //horizontal
+        //@TODO fix (tired lol)
+
+        //claw
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).or(
                 toolOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
         ).whenActive(new InstantCommand(() -> {
@@ -60,6 +69,7 @@ public class TeleOp extends CommandOpMode {
             robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
         }));
 
+        //wrist
         toolOp.getGamepadButton(GamepadKeys.Button.Y).whenPressed(
                 new InstantCommand(() -> {
                     robot.intake.update(IntakeSubsystem.WristState.STOW);
@@ -72,6 +82,7 @@ public class TeleOp extends CommandOpMode {
                 })
         );
 
+        //update * write
         robot.loop();
         robot.write();
     }

@@ -25,6 +25,7 @@ public class VerticalPositionCommand extends CommandBase {
     @Override
     public void initialize(){
         timer = new ElapsedTime();
+        //@TODO FIX
         vertical.setTargetPos(position);
     }
 

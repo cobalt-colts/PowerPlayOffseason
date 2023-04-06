@@ -4,29 +4,23 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalLinkageSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.VerticalSubsystem;
 
 public class HorizontalPositionCommand extends CommandBase {
 
-    private HorizontalSubsystem horizontal;
-    private int position;
-    private double timeout;
-    private double error;
+    private HorizontalLinkageSubsystem horizontal;
+    private double position;
 
-    private ElapsedTime timer;
-
-    public HorizontalPositionCommand(HorizontalSubsystem horizontal, int position, double error, double timeout){
+    public HorizontalPositionCommand(HorizontalLinkageSubsystem horizontal, double position){
         this.horizontal = horizontal;
         this.position = position;
-        this.timeout = timeout;
-        this.error = error;
     }
 
     @Override
     public void initialize(){
-        timer = new ElapsedTime();
-        horizontal.setTargetPos(position);
+        horizontal.setPos(position);
     }
 
     @Override

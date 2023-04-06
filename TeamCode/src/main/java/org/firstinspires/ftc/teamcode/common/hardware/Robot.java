@@ -6,6 +6,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalLinkageSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.TurretSubsystem;
@@ -19,7 +20,7 @@ public class Robot {
     public AprilTagDetector vision;
     public TurretSubsystem turret;
     public VerticalSubsystem vertical;
-    public HorizontalSubsystem horizontal;
+    public HorizontalLinkageSubsystem horizontal;
     public IntakeSubsystem intake;
 
     private final Object imuLock = new Object();
@@ -34,9 +35,9 @@ public class Robot {
 
     public Robot(HardwareMap hardwareMap, boolean isAuto){
         this.isAuto = isAuto;
-        vision.startAprilTag();
-
-        if(!isAuto) {
+        if(this.isAuto){
+            vision.startAprilTag();
+        }else {
             synchronized (imuLock) {
                 imu = hardwareMap.get(BNO055IMU.class, "imu");
                 BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -48,7 +49,7 @@ public class Robot {
         drive = new SampleMecanumDrive(hardwareMap);
         turret = new TurretSubsystem(hardwareMap,isAuto);
         vertical = new VerticalSubsystem(hardwareMap,isAuto);
-        horizontal = new HorizontalSubsystem(hardwareMap,isAuto);
+        horizontal = new HorizontalLinkageSubsystem(hardwareMap,isAuto);
         intake = new IntakeSubsystem(hardwareMap,isAuto);
     }
 
@@ -93,13 +94,15 @@ public class Robot {
     public void read(){
         turret.read();
         vertical.read();
-        horizontal.read();
+
     }
 
     public void loop(){
+        if(isAuto) drive.update();
         turret.loop();
         vertical.loop();
         horizontal.loop();
+
     }
 
     public void write(){
@@ -111,6 +114,6 @@ public class Robot {
     public void reset(){
         turret.reset();
         vertical.reset();
-        horizontal.reset();
+
     }
 }

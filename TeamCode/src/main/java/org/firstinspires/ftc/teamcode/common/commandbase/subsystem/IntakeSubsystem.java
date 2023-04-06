@@ -54,6 +54,8 @@ public class IntakeSubsystem extends SubsystemBase {
         }
     }
 
-
+    //testing
+    public void setClawPosition(double pos){ claw.setPosition(pos);}
+    public void setWristPosition(double pos){ wrist.setPosition(pos);}
 
 }
