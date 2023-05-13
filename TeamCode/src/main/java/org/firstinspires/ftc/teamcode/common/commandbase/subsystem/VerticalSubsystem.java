@@ -51,8 +51,8 @@ public class VerticalSubsystem extends SubsystemBase {
         rightSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftSlide.setDirection(DcMotor.Direction.REVERSE);
-        rightSlide.setDirection(DcMotor.Direction.REVERSE);
+        //leftSlide.setDirection(DcMotor.Direction.REVERSE);
+        //rightSlide.setDirection(DcMotor.Direction.REVERSE);
 
         controller = new ProfiledPIDController(P,I,D, new TrapezoidProfile.Constraints(maxVel,maxAcc));
         controller.setPID(P, I, D);
@@ -77,7 +77,7 @@ public class VerticalSubsystem extends SubsystemBase {
             voltageTimer.reset();
         }
 
-        power = (controller.calculate(verticalPosition, targetPosition) / voltage * 14);
+        power = (controller.calculate(verticalPosition, targetPosition) / voltage * 14) + F;
     }
 
     public void setTargetPos(double position) {
@@ -91,12 +91,14 @@ public class VerticalSubsystem extends SubsystemBase {
     //======
 
     public void read() {
-        verticalPosition = rightSlide.getCurrentPosition();
+        verticalPosition = leftSlide.getCurrentPosition();
+
     }
 
     public void write() {
-        rightSlide.setPower(power);
-        leftSlide.setPower(1.2 * power);
+        if(verticalPosition < -50) power = 0.5; //prevent loose stringing
+        rightSlide.setPower(power + F);
+        leftSlide.setPower(power + F);
     }
 
     public void reset() {
@@ -110,6 +112,8 @@ public class VerticalSubsystem extends SubsystemBase {
     public int getPos() {
         return verticalPosition;
     }
+
+    public int getTargetPosition() {return targetPosition;}
 
     public int getAbsError() { return Math.abs(getError());}
 

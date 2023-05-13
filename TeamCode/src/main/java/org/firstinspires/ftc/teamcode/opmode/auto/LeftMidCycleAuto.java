@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.opmode.auto;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
@@ -40,8 +42,9 @@ public class LeftMidCycleAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException{
         CommandScheduler.getInstance().reset();
-        robot = new Robot(hardwareMap,true);
+        telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
+        robot = new Robot(hardwareMap, telemetry,true);
 
         robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
         robot.intake.update(IntakeSubsystem.WristState.STOW);
@@ -68,8 +71,9 @@ public class LeftMidCycleAuto extends LinearOpMode {
         while(!isStarted()){
             robot.vision.runAprilTag();
             telemetry.update();
-            currId = robot.vision.getAprilTag().id;
-
+            if(robot.vision.getAprilTag() != null) {
+                currId = robot.vision.getAprilTag().id;
+            }
             switch (currId){
                 case 1:
                     location = Location.LEFT;
@@ -87,22 +91,39 @@ public class LeftMidCycleAuto extends LinearOpMode {
         waitForStart();
         robot.horizontal.setPos(0.1);
         robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
-        robot.drive.followTrajectorySequenceAsync(traj1);
+        //robot.drive.followTrajectorySequenceAsync(traj1);
         CommandScheduler.getInstance().schedule(
+
+
+
+
+
+
+
+
+
+
+
                 new SequentialCommandGroup(
-                        new WaitCommand(3000).andThen(new SequentialCommandGroup(
+
+                        new WaitCommand(1000).andThen(new SequentialCommandGroup(
+
                                 //cycle
                                 new AutoMidCycleCommand(robot),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(280)),
                                 new AutoMidCycleCommand(robot),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(230)),
                                 new AutoMidCycleCommand(robot),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(160)),
                                 new AutoMidCycleCommand(robot),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(80)),
                                 new AutoMidCycleCommand(robot),
 
                                 new ParallelCommandGroup(
                                         new InstantCommand(() -> goPark()),
                                         new VerticalPositionCommand(robot.vertical,0,30,5000),
                                         new TurretPositionCommand(robot.turret,0,30,5000),
-                                        new HorizontalPositionCommand(robot.horizontal,0)
+                                        new HorizontalPositionCommand(robot.horizontal,0.1)
 
                                 )
                         ))
@@ -117,6 +138,8 @@ public class LeftMidCycleAuto extends LinearOpMode {
             robot.loop();
 
             robot.write();
+
+            telemetry.update();
         }
     }
 

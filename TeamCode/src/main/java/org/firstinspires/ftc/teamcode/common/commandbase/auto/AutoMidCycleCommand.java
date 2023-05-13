@@ -13,19 +13,20 @@ import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
 public class AutoMidCycleCommand extends SequentialCommandGroup {
     private static int TOLERANCE = 30;
+    private static int stackHeight = 330;
 
     public AutoMidCycleCommand(Robot robot){
         super(
           new SequentialCommandGroup(
                   //SCORE ON MEDIUM
-                  new VerticalPositionCommand(robot.vertical, 2020,0,5000),
-                  new WaitUntilCommand(() -> robot.vertical.getPos() > 250),
-
+                  new VerticalPositionCommand(robot.vertical, 1360,0,5000),
+                  new WaitUntilCommand(() -> robot.vertical.getPos() > 600),
+                  new HorizontalPositionCommand(robot.horizontal,0.2),
                   new TurretPositionCommand(robot.turret,-2100,0,5000),
-                  new WaitUntilCommand(() -> robot.turret.getPos() < -1100), //@TODO fix
+                  new WaitUntilCommand(() -> robot.turret.getPos() < -1100) //@TODO fix
 
-                  new HorizontalPositionCommand(robot.horizontal,0.2).andThen(new WaitCommand(500)),
-                  new WaitUntilCommand(() -> robot.vertical.getAbsError() > TOLERANCE && robot.turret.getAbsError() > TOLERANCE),
+                  .andThen(new WaitCommand(500)),
+                  new WaitUntilCommand(() -> robot.vertical.getAbsError() < TOLERANCE && robot.turret.getAbsError() < TOLERANCE),
 
                   new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN)).andThen(new WaitCommand(500)),
 
@@ -33,9 +34,10 @@ public class AutoMidCycleCommand extends SequentialCommandGroup {
                   new TurretPositionCommand(robot.turret,-850,0,5000),
                   new WaitUntilCommand(() -> robot.turret.getPos() > -1200),
 
-                  new HorizontalPositionCommand(robot.horizontal,0.4).andThen(new WaitCommand(500)),
-                  new VerticalPositionCommand(robot.vertical, 630,0,5000),
-                  new WaitUntilCommand(() -> robot.vertical.getAbsError() > TOLERANCE && robot.turret.getAbsError() > TOLERANCE),
+                  new HorizontalPositionCommand(robot.horizontal,0.4),
+
+                  new VerticalPositionCommand(robot.vertical, stackHeight,0,5000),
+                  new WaitUntilCommand(() -> robot.vertical.getAbsError() < TOLERANCE && robot.turret.getAbsError() < TOLERANCE),
 
                   new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.CLOSED)).andThen(new WaitCommand(500))
           )
@@ -45,4 +47,5 @@ public class AutoMidCycleCommand extends SequentialCommandGroup {
     public static void setTolerance(int tolerance){
         TOLERANCE = tolerance;
     }
+    public static void setStackHeight(int s) { stackHeight = s;}
 }

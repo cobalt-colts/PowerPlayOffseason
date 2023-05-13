@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.common.vision;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.openftc.apriltag.AprilTagDetection;
@@ -23,7 +24,8 @@ public class AprilTagDetector extends LinearOpMode {
 
 
 
-    public void startAprilTag(){
+    public void startAprilTag(HardwareMap hardwareMap){
+        this.hardwareMap = hardwareMap;
         double fx = 578.272;
         double fy = 578.272;
         double cx = 402.145;
@@ -118,6 +120,7 @@ public class AprilTagDetector extends LinearOpMode {
     }
 
     public AprilTagDetection getAprilTag(){
+
         return tagOfInterest;
     }
 

@@ -6,7 +6,6 @@ import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -73,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
         targetPosition = (int) position;
     }
 
-    public void setPower(double power) {
+    public void setCurrentPower(double power) {
         this.power = power;
     }
 
@@ -83,18 +82,20 @@ public class TurretSubsystem extends SubsystemBase {
 
     public void write() {
         turret.setPower(power);
+
     }
 
     public void reset() {
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); turret.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public double getPower() { return power;}
+    public double getCurrentPower() { return turret.getPower();}
 
     public int getPos() {
         return turretPosition;
     }
 
+    public int getTargetPosition() {return targetPosition;}
     public int getAbsError() { return Math.abs(getError());}
 
     public int getError() { return targetPosition - turretPosition;}

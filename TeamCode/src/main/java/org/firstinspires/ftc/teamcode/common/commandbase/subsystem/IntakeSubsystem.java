@@ -1,19 +1,22 @@
 package org.firstinspires.ftc.teamcode.common.commandbase.subsystem;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+@Config
 public class IntakeSubsystem extends SubsystemBase {
 
     private Servo claw;
     private Servo wrist;
 
-    public static double active = 0.45;
-    public static double stow = 0;
+    public static double active = 0;
+    public static double slight = 0.2;
+    public static double stow = 0.8;
 
     public static double open = 0.4;
-    public static double closed = 0.65;
+    public static double closed = 0;
 
     public enum ClawState{
         OPEN,
@@ -22,6 +25,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public enum WristState{
         ACTIVE,
+        SLIGHT,
         STOW
     }
 
@@ -48,6 +52,8 @@ public class IntakeSubsystem extends SubsystemBase {
             case ACTIVE:
                 wrist.setPosition(active);
                 break;
+            case SLIGHT:
+                
             case STOW:
                 wrist.setPosition(stow);
                 break;

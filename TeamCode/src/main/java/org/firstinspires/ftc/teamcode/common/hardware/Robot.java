@@ -2,12 +2,14 @@ package org.firstinspires.ftc.teamcode.common.hardware;
 
 import androidx.annotation.GuardedBy;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalLinkageSubsystem;
-import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.TurretSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.VerticalSubsystem;
@@ -23,6 +25,8 @@ public class Robot {
     public HorizontalLinkageSubsystem horizontal;
     public IntakeSubsystem intake;
 
+    private Telemetry telemetry;
+
     private final Object imuLock = new Object();
     @GuardedBy("imuLock")
     private BNO055IMU imu;
@@ -33,10 +37,12 @@ public class Robot {
 
     private boolean isAuto = false;
 
-    public Robot(HardwareMap hardwareMap, boolean isAuto){
+    public Robot(HardwareMap hardwareMap, Telemetry telemetry, boolean isAuto){
+        this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        vision  = new AprilTagDetector();
         this.isAuto = isAuto;
         if(this.isAuto){
-            vision.startAprilTag();
+            vision.startAprilTag(hardwareMap);
         }else {
             synchronized (imuLock) {
                 imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -64,15 +70,19 @@ public class Robot {
 
         double speed = Math.hypot(lsx, lsy); //get speed
         double LeftStickAngle = Math.atan2(lsy, -lsx) - Math.PI / 4; //get angle
-        double rightX = -rsx; //rotation
+        double rightX = rsx; //rotation
         rightX *= 0.8; //optionally reduce rotation value for better turning
         //linear the angle by the angle of the robot to make it field relative
-        double leftFrontPower = speed * Math.cos(LeftStickAngle - robotAngle) + rightX;
-        double rightFrontPower = speed * Math.sin(LeftStickAngle - robotAngle) - rightX;
-        double leftBackPower = speed * Math.sin(LeftStickAngle - robotAngle) + rightX;
-        double rightBackPower = speed * Math.cos(LeftStickAngle - robotAngle) - rightX;
+        double leftFrontPower = speed * Math.sin(LeftStickAngle - robotAngle) + rightX; //+ when strafe (without reverse)
+        double rightFrontPower = speed * Math.sin(LeftStickAngle - robotAngle) - rightX; //- when strafe
+        double leftBackPower = speed * Math.cos(LeftStickAngle - robotAngle) + rightX; //- when strafe (without reverse)
+        double rightBackPower = speed * Math.cos(LeftStickAngle - robotAngle) - rightX; //+ when strafe
 
-        drive.setMotorPowers(leftFrontPower,leftBackPower,rightFrontPower,rightBackPower);
+        drive.leftFront.setPower(leftFrontPower);
+        drive.leftRear.setPower(leftBackPower);
+        drive.rightFront.setPower(rightFrontPower);
+        drive.rightRear.setPower(rightBackPower);
+
 
     }
 
@@ -95,12 +105,18 @@ public class Robot {
         turret.read();
         vertical.read();
 
+        telemetry.addData("Turret Pos: ", turret.getPos());
+        telemetry.addData("Turret Goal: ", turret.getTargetPosition());
+
+        telemetry.addData("Vertical Pos: ", vertical.getPos());
+        telemetry.addData("Vertical Goal: ", vertical.getTargetPosition());
+
     }
 
     public void loop(){
         if(isAuto) drive.update();
         turret.loop();
-        vertical.loop();
+        if(isAuto) vertical.loop();
         horizontal.loop();
 
     }

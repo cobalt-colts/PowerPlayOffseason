@@ -20,10 +20,11 @@ public class HorizontalLinkageSubsystem extends SubsystemBase {
     private double targetPosition;
     private double previousPosition = 0.0;
 
+    private boolean isAuto = false;
     //ty kookybotz
     public HorizontalLinkageSubsystem(HardwareMap hardwareMap, boolean isAuto){
         horSlide = hardwareMap.get(Servo.class, "horLinkage");
-
+        if(!isAuto) horSlide.setPosition(0.2);
     }
 
     public void loop() {
