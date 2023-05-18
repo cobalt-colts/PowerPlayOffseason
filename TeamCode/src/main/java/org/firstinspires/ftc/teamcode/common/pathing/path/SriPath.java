@@ -1,6 +1,6 @@
-package com.example.visualizer.pathing.path;
+package org.firstinspires.ftc.teamcode.common.pathing.path;
 
-import com.example.visualizer.pathing.geometry.SriPoint;
+import org.firstinspires.ftc.teamcode.common.pathing.geometry.SriPoint;
 
 import java.util.ArrayList;
 
@@ -27,12 +27,15 @@ public class SriPath {
 
         double distance = 0;
 
+        int idx = 0;
+
 
         for(double t = 0; t <= 1; t+= 0.02){
             //Beizer Parametric Points
             double x = (1-t) * ( (1-t) * ( (1-t)*p1.x + t * p2.x) + t * ( (1-t) * p2.x + t * p3.x)) + t * ( (1-t) * ((1-t) * p2.x + t * p3.x) + t * ( (1-t) * p3.x + t * p4.x));
             double y = (1-t) * ( (1-t) * ( (1-t)*p1.y + t * p2.y) + t * ( (1-t) * p2.y + t * p3.y)) + t * ( (1-t) * ((1-t) * p2.y + t * p3.y) + t * ( (1-t) * p3.y + t * p4.y));
-            beizerPath.add(new SriPoint(x,y));
+            beizerPath.add(new SriPoint(x,y,idx));
+            idx++;
 
             if(t == 0) continue;
             distance += beizerPath.get(beizerPath.size() - 1).distance(beizerPath.get(beizerPath.size()-2));

@@ -5,7 +5,7 @@
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
 
-package com.example.visualizer.pathing.path;
+package org.firstinspires.ftc.teamcode.common.pathing.path;
 
 import java.util.ArrayList;
 

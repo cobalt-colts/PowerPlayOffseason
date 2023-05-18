@@ -1,4 +1,4 @@
-package com.example.visualizer.pathing.geometry;
+package org.firstinspires.ftc.teamcode.common.pathing.geometry;
 
 import org.opencv.core.Point;
 
@@ -9,22 +9,18 @@ public class SriPoint extends Point {
     public double curvature = 0;
     public double targetVelocity = 0;
 
-    public SriPoint(double x, double y, double distanceInPath){
-        this(x,y);
-        this.distanceInPath = distanceInPath;
+
+    public SriPoint(double x, double y, int index){
+        super(x,y);
+        this.index = index;
     }
 
     public SriPoint(double x, double y){
         super(x,y);
     }
 
-    public SriPoint(SriPoint other){
-        this(other.x,other.y);
-    }
 
-    public SriPoint clone() {
-        return new SriPoint(this);
-    }
+
 
     public void setDistanceInPath(double distanceInPath) {
         this.distanceInPath = distanceInPath;

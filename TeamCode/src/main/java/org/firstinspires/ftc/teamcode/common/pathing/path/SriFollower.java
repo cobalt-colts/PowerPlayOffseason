@@ -1,6 +1,6 @@
-package com.example.visualizer.pathing.path;
+package org.firstinspires.ftc.teamcode.common.pathing.path;
 
-import com.example.visualizer.pathing.geometry.SriPoint;
+import org.firstinspires.ftc.teamcode.common.pathing.geometry.SriPoint;
 
 import org.opencv.core.Point;
 
@@ -18,6 +18,9 @@ public class SriFollower {
     double kp;
 
     double targetVelocity;
+    double leftSpeed;
+    double rightSpeed;
+
     int lastRateLimiterCallTime;
 
     SriPoint closestPoint;
@@ -26,8 +29,8 @@ public class SriFollower {
 
     RobotPosition currentPosition;
 
-    public SriFollower(SriPath path, double maxAccel, double lookahead, double trackWidth, double kv, double ka, double kp){
-        this.path = path.getBeizerPath();
+    public SriFollower(SriPath sriPath, double maxAccel, double lookahead, double trackWidth, double kv, double ka, double kp){
+        this.path = sriPath.getBeizerPath();
         this.maxAcceleration = maxAccel;
         this.lookaheadDistance = lookahead;
         this.trackWidth = trackWidth;
@@ -35,7 +38,9 @@ public class SriFollower {
         this.ka = ka;
         this.kp = kp;
 
-
+        closestPoint = path.get(0);
+        lookaheadPoint = path.get(0);
+        lookaheadPointSegmentStart = path.get(0);
     }
 
     //idk make this cmd based sometime
@@ -50,9 +55,21 @@ public class SriFollower {
         double oldTargetVelocity = targetVelocity;
         targetVelocity = findTargetVelocity(maxAcceleration, oldTargetVelocity, closestPoint);
 
+        double[] wheelSpeeds = calculateWheelSpeeds(targetVelocity, curvature, trackWidth);
+        leftSpeed = wheelSpeeds[0]; //set public variables to new values
+        rightSpeed = wheelSpeeds[1];
         //calculate wheel speeds
     }
 
+    public void updateRobotPosition(RobotPosition position) {
+        currentPosition = position;
+    }
+
+
+    public boolean isFinished() {
+        // return closestPoint == path.get(path.size()-1); // won't work, stopping will be wonky
+        return findFractionalIndex(lookaheadPoint, lookaheadPointSegmentStart) > path.get(path.size()-1).index;
+    }
 
     private void updateClosestPoint(SriPoint startingPoint, RobotPosition currentPosition){
         SriPoint currentClosest = startingPoint;
@@ -164,5 +181,27 @@ public class SriFollower {
         double output = MathFunctions.clamp(closestPoint.targetVelocity - previousTargetVelocity, -maxChange, maxChange);
 
         return output;
+    }
+
+    private double[] calculateWheelSpeeds(double targetVelocity, double curvature, double trackWidth) {
+        double leftSpeed = targetVelocity * (2 + (curvature * trackWidth)) / 2;
+        double rightSpeed = targetVelocity * (2 - (curvature * trackWidth)) / 2;
+        double[] speedArray = {leftSpeed, rightSpeed};
+
+        return speedArray;
+    }
+
+    /**
+     * @return the leftSpeed
+     */
+    public double getLeftSpeed() {
+        return leftSpeed;
+    }
+
+    /**
+     * @return the rightSpeed
+     */
+    public double getRightSpeed() {
+        return rightSpeed;
     }
 }
