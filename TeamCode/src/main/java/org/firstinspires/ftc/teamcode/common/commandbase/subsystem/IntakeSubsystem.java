@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.common.commandbase.subsystem;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -10,6 +11,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Servo claw;
     private Servo wrist;
+
+    private DigitalChannel receiver;
 
     public static double active = 0;
     public static double slight = 0.2;

@@ -39,7 +39,6 @@ public class VerticalSubsystem extends SubsystemBase {
 
     //ty kookybotz
     public VerticalSubsystem(HardwareMap hardwareMap, boolean isAuto){
-        //@TODO HARDWARE MAP DUMBO
         leftSlide = hardwareMap.get(DcMotorEx.class, "leftSlide");
         rightSlide = hardwareMap.get(DcMotorEx.class, "rightSlide");
 

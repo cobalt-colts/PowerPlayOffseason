@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalLinkageSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.SensorSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.TurretSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.VerticalSubsystem;
 import org.firstinspires.ftc.teamcode.common.drive.SampleMecanumDrive;
@@ -24,6 +25,7 @@ public class Robot {
     public VerticalSubsystem vertical;
     public HorizontalLinkageSubsystem horizontal;
     public IntakeSubsystem intake;
+    public SensorSubsystem sensor;
 
     private Telemetry telemetry;
 
@@ -57,6 +59,7 @@ public class Robot {
         vertical = new VerticalSubsystem(hardwareMap,isAuto);
         horizontal = new HorizontalLinkageSubsystem(hardwareMap,isAuto);
         intake = new IntakeSubsystem(hardwareMap,isAuto);
+        sensor = new SensorSubsystem(hardwareMap);
     }
 
     public void fieldRelative(double lsx,double lsy,double rsx,boolean calibrate){
@@ -104,7 +107,8 @@ public class Robot {
     public void read(){
         turret.read();
         vertical.read();
-
+        sensor.read();
+        telemetry.addData("Receiver Open: ", sensor.getState());
         telemetry.addData("Turret Pos: ", turret.getPos());
         telemetry.addData("Turret Goal: ", turret.getTargetPosition());
 
