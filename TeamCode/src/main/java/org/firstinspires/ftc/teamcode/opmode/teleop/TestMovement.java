@@ -16,17 +16,13 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.common.util.Encoder;
 
 @TeleOp
 @Config
 public class TestMovement extends LinearOpMode {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
-    private Encoder rightEncoder;
+    private Encoder rightEncoder, frontEncoder;
     private BNO055IMU imu;
 
 
@@ -34,13 +30,13 @@ public class TestMovement extends LinearOpMode {
     public double robotHeading = 0;
     public double headingError  = 0;
     public double headingGoal = 0;
-    public double encoderOffset = 0;
-
+    public double fwdEncoderOffset = 0;
+    public double strEncoderOffset = 0;
 
     
-    public static PIDController fwd,rot;
+    public static PIDController fwd,rot,str;
 
-    public static PIDCoefficients fwdVal = new PIDCoefficients(), rotVal = new PIDCoefficients();
+    public static PIDCoefficients fwdVal = new PIDCoefficients(), rotVal = new PIDCoefficients(), strVal = new PIDCoefficients();
     @Override
     public void runOpMode(){
         leftFront = hardwareMap.get(DcMotorEx .class, "leftFront");
@@ -56,16 +52,20 @@ public class TestMovement extends LinearOpMode {
         initIMU();
 
         rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightBack"));
+        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightFront"));
 
         fwd = new PIDController(fwdVal.p, fwdVal.i, fwdVal.d);
         rot = new PIDController(rotVal.p, rotVal.i, rotVal.d);
+        str = new PIDController(strVal.p, strVal.i, strVal.d);
 
         while (opModeInInit()) {
             telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
             telemetry.update();
         }
 
-        encoderOffset = encoderTicksToInches(getWheelPosition());
+        fwdEncoderOffset = encoderTicksToInches(getFwd());
+        strEncoderOffset = encoderTicksToInches(getFwd());
+
         resetHeading();
 
         while(opModeIsActive()){
@@ -76,20 +76,29 @@ public class TestMovement extends LinearOpMode {
             fwd.setPID(0.08, fwdVal.i, fwdVal.d);
             rot.setPID(rotVal.p, rotVal.i, rotVal.d);
 
-            double currPos = encoderTicksToInches(getWheelPosition()) - encoderOffset;
-            telemetry.addData("curr: ",currPos);
-            double fwdPower = Range.clip(fwd.calculate(currPos, 50), -0.5, 0.5);
+            double currFwd = getFwd() - fwdEncoderOffset;
+            double currStr = getStr() - strEncoderOffset;
 
+            double fwdPower = Range.clip(fwd.calculate(currFwd, 50), -0.5, 0.5);
+            double strPower = Range.clip(str.calculate(currStr,0), -0.5, 0.5);
             double rotPower = Range.clip(rotVal.p * (robotHeading),-0.5,0.5);
+
             telemetry.addData("heading angle", robotHeading);
             telemetry.addData("heading err" , headingError);
             telemetry.addData("heading offset", headingOffset);
-            telemetry.addData("heading pwr" , rotPower );
-            leftFront.setPower(fwdPower + rotPower);
-            leftRear.setPower(fwdPower + rotPower);
+            telemetry.addData("heading pwr" , rotPower);
 
-            rightFront.setPower(fwdPower - rotPower);
-            rightRear.setPower(fwdPower - rotPower);
+            telemetry.addData("----","----");
+
+            telemetry.addData("currFwd: ",currFwd);
+            telemetry.addData("currStr: ",currStr);
+            telemetry.addData("fwd pwr: ",fwdPower);
+            telemetry.addData("str pwr: ",strPower);
+
+            leftFront.setPower(fwdPower + rotPower - strPower);
+            leftRear.setPower(fwdPower + rotPower + strPower);
+            rightFront.setPower(fwdPower - rotPower + strPower);
+            rightRear.setPower(fwdPower - rotPower - strPower);
 
             telemetry.update();
 
@@ -98,9 +107,12 @@ public class TestMovement extends LinearOpMode {
 
     }
 
+    public double getFwd(){
+        return encoderTicksToInches(rightEncoder.getCurrentPosition());
+    }
 
-    public int getWheelPosition(){
-        return (int) rightEncoder.getCurrentPosition();
+    public double getStr(){
+        return encoderTicksToInches(frontEncoder.getCurrentPosition());
     }
 
     public static double encoderTicksToInches(double ticks) {
