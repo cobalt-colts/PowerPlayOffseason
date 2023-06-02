@@ -69,38 +69,35 @@ public class TestMovement extends LinearOpMode {
         resetHeading();
 
         while(opModeIsActive()){
+            robotHeading = getRawHeading() - headingOffset;
+            headingError = robotHeading - headingGoal;
 
+
+            fwd.setPID(0.08, fwdVal.i, fwdVal.d);
+            rot.setPID(rotVal.p, rotVal.i, rotVal.d);
+
+            double currPos = encoderTicksToInches(getWheelPosition()) - encoderOffset;
+            telemetry.addData("curr: ",currPos);
+            double fwdPower = Range.clip(fwd.calculate(currPos, 50), -0.5, 0.5);
+
+            double rotPower = Range.clip(rotVal.p * (robotHeading),-0.5,0.5);
+            telemetry.addData("heading angle", robotHeading);
+            telemetry.addData("heading err" , headingError);
+            telemetry.addData("heading offset", headingOffset);
+            telemetry.addData("heading pwr" , rotPower );
+            leftFront.setPower(fwdPower + rotPower);
+            leftRear.setPower(fwdPower + rotPower);
+
+            rightFront.setPower(fwdPower - rotPower);
+            rightRear.setPower(fwdPower - rotPower);
+
+            telemetry.update();
 
         }
 
 
     }
 
-    public void goDistance(int GOAL_DISTANCE){
-        robotHeading = getRawHeading() - headingOffset;
-        headingError = robotHeading - headingGoal;
-
-
-        fwd.setPID(0.08, fwdVal.i, fwdVal.d);
-        rot.setPID(0.08, rotVal.i, rotVal.d);
-
-        double currPos = encoderTicksToInches(getWheelPosition()) - encoderOffset;
-        telemetry.addData("curr: ",currPos);
-        double fwdPower = Range.clip(fwd.calculate(currPos, GOAL_DISTANCE), -0.5, 0.5);
-
-        double rotPower = Range.clip(rotVal.p * (robotHeading),-0.5,0.5);
-        telemetry.addData("heading angle", robotHeading);
-        telemetry.addData("heading err" , headingError);
-        telemetry.addData("heading offset", headingOffset);
-        telemetry.addData("heading pwr" , rotPower );
-        leftFront.setPower(fwdPower + rotPower);
-        leftRear.setPower(fwdPower + rotPower);
-
-        rightFront.setPower(fwdPower - rotPower);
-        rightRear.setPower(fwdPower - rotPower);
-
-        telemetry.update();
-    }
 
     public int getWheelPosition(){
         return (int) rightEncoder.getCurrentPosition();
@@ -112,16 +109,16 @@ public class TestMovement extends LinearOpMode {
     }
 
     public void initIMU() {
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
         imu = hardwareMap.get(BNO055IMU.class, "imu");
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
         imu.initialize(parameters);
 
     }
 
     public double getRawHeading() {
-        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        return angles.firstAngle;
+        ;
+        return -imu.getAngularOrientation().firstAngle;
     }
 
     public void resetHeading() {
