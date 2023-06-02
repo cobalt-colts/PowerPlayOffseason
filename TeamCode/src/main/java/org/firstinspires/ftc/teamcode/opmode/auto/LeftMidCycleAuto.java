@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.AutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.DriveToCycleCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.HorizontalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.TurretPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositionCommand;
@@ -35,9 +36,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
         LEFT, MIDDLE, RIGHT
     }
     Location location = Location.MIDDLE;
-    TrajectorySequence traj1;
-    TrajectorySequence left;
-    TrajectorySequence right;
+
 
     @Override
     public void runOpMode() throws InterruptedException{
@@ -52,20 +51,6 @@ public class LeftMidCycleAuto extends LinearOpMode {
         AutoMidCycleCommand.setTolerance(30);
 
 
-        traj1 = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
-                .forward(50)
-
-                .build();
-
-        left = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
-                .strafeLeft(25)
-
-                .build();
-
-        right = robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
-                .strafeRight(25)
-
-                .build();
 
 
         while(!isStarted()){
@@ -89,24 +74,17 @@ public class LeftMidCycleAuto extends LinearOpMode {
         }
 
         waitForStart();
+        robot.drive.startIMUThread(this);
+
         robot.horizontal.setPos(0.1);
         robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //robot.drive.followTrajectorySequenceAsync(traj1);
+
+
         CommandScheduler.getInstance().schedule(
 
-
-
-
-
-
-
-
-
-
-
                 new SequentialCommandGroup(
-
-                        new WaitCommand(1000).andThen(new SequentialCommandGroup(
+                        new DriveToCycleCommand(robot).andThen(new SequentialCommandGroup(
 
                                 //cycle
                                 new AutoMidCycleCommand(robot),
@@ -144,8 +122,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
     }
 
     public void goPark(){
-        if(currId == 1) robot.drive.followTrajectorySequenceAsync(left);
-        if(currId == 3) robot.drive.followTrajectorySequenceAsync(right);
+
     }
 
 

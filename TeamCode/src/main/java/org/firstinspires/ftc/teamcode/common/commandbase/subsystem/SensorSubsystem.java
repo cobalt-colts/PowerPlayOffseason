@@ -6,7 +6,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class SensorSubsystem extends SubsystemBase {
     private DigitalChannel receiver;
-    private boolean state;
+    private boolean prevState = true;
+    private boolean currState;
     public SensorSubsystem(HardwareMap hardwareMap){
         receiver = hardwareMap.get(DigitalChannel.class, "receiver");
         receiver.setMode(DigitalChannel.Mode.INPUT);
@@ -17,12 +18,16 @@ public class SensorSubsystem extends SubsystemBase {
     }
 
     public void read() {
-        //true: nothing is there, leave open
-        //false: cone
-        state = receiver.getState();
+        currState = receiver.getState();
     }
 
-    public boolean getState(){
-        return state;
+
+    public void write(){
+        prevState = currState;
     }
+    public boolean getCurrState(){
+        return currState;
+    }
+
+    public boolean getPrevState() { return prevState; }
 }

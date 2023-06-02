@@ -15,8 +15,8 @@ public class TurretPositionCommand extends CommandBase {
 
     private ElapsedTime timer;
 
-    public TurretPositionCommand(TurretSubsystem horizontal, int position, double error, double timeout){
-        this.turret = horizontal;
+    public TurretPositionCommand(TurretSubsystem turret, int position, double error, double timeout){
+        this.turret = turret;
         this.position = position;
         this.timeout = timeout;
         this.error = error;

@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
@@ -20,10 +21,8 @@ public class Opmode extends CommandOpMode {
 
     private DigitalChannel receiver;
 
-    private boolean prevTouchpad = false;
-    private boolean currTouchpad = false;
-
-    private boolean autoPickup = false;
+    private double outModifier = 0.0;
+    private double inModifier = 0.0;
 
     GamepadEx driverOp;
     GamepadEx toolOp;
@@ -38,6 +37,7 @@ public class Opmode extends CommandOpMode {
 
 
 
+
         driverOp = new GamepadEx(gamepad1);
         toolOp = new GamepadEx(gamepad2);
     }
@@ -48,32 +48,26 @@ public class Opmode extends CommandOpMode {
         if (timer == null) {
             timer = new ElapsedTime();
             robot.reset();
-            robot.startIMUThread(this);
+            robot.drive.startIMUThread(this);
         }
-        toggleAuto();
-        if(autoPickup && !gamepad1.left_bumper){
-            if(robot.sensor.getState()){
-                robot.intake.update(IntakeSubsystem.ClawState.OPEN);
-            }else{
-                robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
-            }
-        }else if(autoPickup && (gamepad1.left_bumper || gamepad2.left_bumper)){
-            robot.intake.update(IntakeSubsystem.ClawState.OPEN);
-            sleep(600);
-        }else{
-            if(gamepad1.left_bumper || gamepad2.left_bumper) robot.intake.update(IntakeSubsystem.ClawState.OPEN);
-            if(gamepad1.right_bumper || gamepad2.right_bumper) robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
-        }
+
         robot.read();
+        //intake
+
+        robot.updateClaw(gamepad1,gamepad2);
         //drivetrain
-        robot.fieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX(), driverOp.getButton(GamepadKeys.Button.X));
+        robot.drive.fieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX(), driverOp.getButton(GamepadKeys.Button.X));
         //turret
         robot.turret.setCurrentPower(0.8 * toolOp.getRightX());
         //vertical
         robot.vertical.setPower(toolOp.getLeftY());
+        //horizontal modifiers
+        outModifier = Math.min(0.005, 0.005 - (robot.horizontal.getPos() / 100));
+        inModifier = Math.min(0.005, (robot.horizontal.getPos() / 80));
         //horizontal
-        robot.horizontal.setPos(Math.min(0.4,Math.max(0,robot.horizontal.getPos() + 0.005 * (toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER)))));
+        robot.horizontal.setPos(Math.min(0.4,Math.max(0,robot.horizontal.getPos() + (outModifier * toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - inModifier * (toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - 0.002)))));
         //wrist
+
         if(gamepad2.y) robot.intake.update(IntakeSubsystem.WristState.STOW);
         if(gamepad2.b) robot.intake.setWristPosition(0.3);
         if(gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
@@ -82,10 +76,5 @@ public class Opmode extends CommandOpMode {
         robot.write();
     }
 
-    public void toggleAuto(){
-        currTouchpad = gamepad1.touchpad;
-        if(currTouchpad && !prevTouchpad) {
-            autoPickup = !autoPickup;
-        }
-    }
+
 }

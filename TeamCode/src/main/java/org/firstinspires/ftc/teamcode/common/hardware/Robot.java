@@ -1,14 +1,19 @@
 package org.firstinspires.ftc.teamcode.common.hardware;
 
+import static java.lang.Thread.sleep;
+
 import androidx.annotation.GuardedBy;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.HorizontalLinkageSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.SensorSubsystem;
@@ -19,25 +24,24 @@ import org.firstinspires.ftc.teamcode.common.vision.AprilTagDetector;
 
 public class Robot {
 
-    public SampleMecanumDrive drive;
     public AprilTagDetector vision;
     public TurretSubsystem turret;
     public VerticalSubsystem vertical;
     public HorizontalLinkageSubsystem horizontal;
     public IntakeSubsystem intake;
     public SensorSubsystem sensor;
+    public DriveSubsystem drive;
 
     private Telemetry telemetry;
 
-    private final Object imuLock = new Object();
-    @GuardedBy("imuLock")
-    private BNO055IMU imu;
-    private double imuAngle = 0;
-    private double zeroAngle = 0;
-
-    private Thread imuThread;
 
     private boolean isAuto = false;
+
+    private ElapsedTime rumble;
+    private boolean prevTouchpad = false;
+    private boolean currTouchpad = false;
+
+    private boolean autoPickup = false;
 
     public Robot(HardwareMap hardwareMap, Telemetry telemetry, boolean isAuto){
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -45,70 +49,66 @@ public class Robot {
         this.isAuto = isAuto;
         if(this.isAuto){
             vision.startAprilTag(hardwareMap);
-        }else {
-            synchronized (imuLock) {
-                imu = hardwareMap.get(BNO055IMU.class, "imu");
-                BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-                parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-                imu.initialize(parameters);
-            }
         }
+        //else (commented out if not using RR)
 
-        drive = new SampleMecanumDrive(hardwareMap);
+
+        drive = new DriveSubsystem(hardwareMap,isAuto);
         turret = new TurretSubsystem(hardwareMap,isAuto);
         vertical = new VerticalSubsystem(hardwareMap,isAuto);
         horizontal = new HorizontalLinkageSubsystem(hardwareMap,isAuto);
         intake = new IntakeSubsystem(hardwareMap,isAuto);
         sensor = new SensorSubsystem(hardwareMap);
+
+        rumble = new ElapsedTime();
     }
 
-    public void fieldRelative(double lsx,double lsy,double rsx,boolean calibrate){
-        //@TODO Add Speed Modifs
 
-        if (calibrate) {
-            zeroAngle = this.getAngle();
-
+    public void updateClaw(Gamepad gamepad1, Gamepad gamepad2) {
+        boolean currState = sensor.getCurrState();
+        boolean prevState = sensor.getPrevState();
+        //true: nothing is there, leave open
+        //false: cone
+        if(rumble.milliseconds() > 300){
+            gamepad1.stopRumble();
+            gamepad2.stopRumble();
+            rumble.reset();
         }
-        double robotAngle = this.getAngle() - zeroAngle;
 
-        double speed = Math.hypot(lsx, lsy); //get speed
-        double LeftStickAngle = Math.atan2(lsy, -lsx) - Math.PI / 4; //get angle
-        double rightX = rsx; //rotation
-        rightX *= 0.8; //optionally reduce rotation value for better turning
-        //linear the angle by the angle of the robot to make it field relative
-        double leftFrontPower = speed * Math.sin(LeftStickAngle - robotAngle) + rightX; //+ when strafe (without reverse)
-        double rightFrontPower = speed * Math.sin(LeftStickAngle - robotAngle) - rightX; //- when strafe
-        double leftBackPower = speed * Math.cos(LeftStickAngle - robotAngle) + rightX; //- when strafe (without reverse)
-        double rightBackPower = speed * Math.cos(LeftStickAngle - robotAngle) - rightX; //+ when strafe
+        currTouchpad = gamepad1.touchpad;
+        if(currTouchpad && !prevTouchpad) {
+            autoPickup = !autoPickup;
+        }
 
-        drive.leftFront.setPower(leftFrontPower);
-        drive.leftRear.setPower(leftBackPower);
-        drive.rightFront.setPower(rightFrontPower);
-        drive.rightRear.setPower(rightBackPower);
+        if(!currState && prevState){
+            gamepad1.rumble(0.5, 0.5, Gamepad.RUMBLE_DURATION_CONTINUOUS);
+            gamepad2.rumble(0.5, 0.5, Gamepad.RUMBLE_DURATION_CONTINUOUS);
+            rumble.startTime();
+        }
 
-
-    }
-
-    public void startIMUThread(LinearOpMode opMode) {
-        imuThread = new Thread(() -> {
-            while (!opMode.isStopRequested() && opMode.opModeIsActive()) {
-                synchronized (imuLock) {
-                    imuAngle = -imu.getAngularOrientation().firstAngle;
-                }
+        if(autoPickup && !(gamepad1.left_bumper || gamepad2.left_bumper)){
+            if(currState) intake.update(IntakeSubsystem.ClawState.OPEN);
+            else intake.update(IntakeSubsystem.ClawState.CLOSED);
+        }else if(autoPickup && (gamepad1.left_bumper || gamepad2.left_bumper)){
+            intake.update(IntakeSubsystem.ClawState.OPEN);
+            try {
+                Thread.sleep(600);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-        });
-        imuThread.start();
+        }else{
+            if(gamepad1.left_bumper || gamepad2.left_bumper) intake.update(IntakeSubsystem.ClawState.OPEN);
+            if(gamepad1.right_bumper || gamepad2.right_bumper) intake.update(IntakeSubsystem.ClawState.CLOSED);
+        }
     }
 
-    public double getAngle() {
-        return imuAngle;
-    }
+
 
     public void read(){
         turret.read();
         vertical.read();
         sensor.read();
-        telemetry.addData("Receiver Open: ", sensor.getState());
+        telemetry.addData("Receiver Open: ", sensor.getCurrState());
         telemetry.addData("Turret Pos: ", turret.getPos());
         telemetry.addData("Turret Goal: ", turret.getTargetPosition());
 
@@ -118,7 +118,7 @@ public class Robot {
     }
 
     public void loop(){
-        if(isAuto) drive.update();
+        //if(isAuto) drive.update();
         turret.loop();
         if(isAuto) vertical.loop();
         horizontal.loop();
@@ -129,6 +129,7 @@ public class Robot {
         turret.write();
         vertical.write();
         horizontal.write();
+        sensor.write();
     }
 
     public void reset(){
