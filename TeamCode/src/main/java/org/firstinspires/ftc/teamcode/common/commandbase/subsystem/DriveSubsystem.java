@@ -80,6 +80,7 @@ public class DriveSubsystem {
         imuThread = new Thread(() -> {
             while (!opMode.isStopRequested() && opMode.opModeIsActive()) {
                 synchronized (imuLock) {
+                    //may need to switch signs
                     imuAngle = -imu.getAngularOrientation().firstAngle;
                 }
             }

@@ -64,7 +64,7 @@ public class TestMovement extends LinearOpMode {
         }
 
         fwdEncoderOffset = encoderTicksToInches(getFwd());
-        strEncoderOffset = encoderTicksToInches(getFwd());
+        strEncoderOffset = encoderTicksToInches(getStr());
 
         resetHeading();
 
@@ -73,9 +73,9 @@ public class TestMovement extends LinearOpMode {
             headingError = robotHeading - headingGoal;
 
 
-            fwd.setPID(0.08, fwdVal.i, fwdVal.d);
-            rot.setPID(rotVal.p, rotVal.i, rotVal.d);
-
+            fwd.setPID(0.08,fwdVal.i,fwdVal.d);
+            rot.setPID(rotVal.p,rotVal.i,rotVal.d);
+            str.setPID(strVal.p,strVal.i,strVal.d);
             double currFwd = getFwd() - fwdEncoderOffset;
             double currStr = getStr() - strEncoderOffset;
 
@@ -129,7 +129,6 @@ public class TestMovement extends LinearOpMode {
     }
 
     public double getRawHeading() {
-        ;
         return -imu.getAngularOrientation().firstAngle;
     }
 
