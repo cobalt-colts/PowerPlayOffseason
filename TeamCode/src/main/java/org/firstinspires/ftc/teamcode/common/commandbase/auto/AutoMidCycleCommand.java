@@ -12,26 +12,31 @@ import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsyst
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
 public class AutoMidCycleCommand extends SequentialCommandGroup {
-    private static int TOLERANCE = 30;
+    private static int TOLERANCE = 10;
     private static int stackHeight = 330;
 
     public AutoMidCycleCommand(Robot robot){
         super(
           new SequentialCommandGroup(
                   //SCORE ON MEDIUM
-                  new VerticalPositionCommand(robot.vertical, 1360,0,5000),
+                  new VerticalPositionCommand(robot.vertical, 1300,0,5000),
+                  new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.SLIGHT)),
                   new WaitUntilCommand(() -> robot.vertical.getPos() > 600),
-                  new HorizontalPositionCommand(robot.horizontal,0.2),
-                  new TurretPositionCommand(robot.turret,-2100,0,5000),
-                  new WaitUntilCommand(() -> robot.turret.getPos() < -1100) //@TODO fix
+                  new HorizontalPositionCommand(robot.horizontal,0.10),
+                  new TurretPositionCommand(robot.turret,-2070,0,5000),
+                  new WaitUntilCommand(() -> robot.turret.getPos() < -1100), //@TODO fix
 
-                  .andThen(new WaitCommand(500)),
-                  new WaitUntilCommand(() -> robot.vertical.getAbsError() < TOLERANCE && robot.turret.getAbsError() < TOLERANCE),
-
-                  new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN)).andThen(new WaitCommand(500)),
+                  //.andThen(new WaitCommand(500)),
+                  new WaitUntilCommand(() -> robot.vertical.getAbsError() < TOLERANCE && robot.turret.getAbsError() < TOLERANCE)
+                          .andThen(new HorizontalPositionCommand(robot.horizontal, 0.20)),
+                  new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.ACTIVE))
+                          .andThen(new WaitCommand(200))
+                          .andThen(new InstantCommand((() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN))))
+                          .andThen(new WaitCommand(500)),
 
                   //INTAKE FROM STACK
-                  new TurretPositionCommand(robot.turret,-850,0,5000),
+                  new TurretPositionCommand(robot.turret,-820,0,5000),
+                  new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.ACTIVE)),
                   new WaitUntilCommand(() -> robot.turret.getPos() > -1200),
 
                   new HorizontalPositionCommand(robot.horizontal,0.4),

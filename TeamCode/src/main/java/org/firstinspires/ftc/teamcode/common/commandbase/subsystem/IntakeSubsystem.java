@@ -15,7 +15,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private DigitalChannel receiver;
 
     public static double active = 0;
-    public static double slight = 0.2;
+    public static double slight = 0.5;
     public static double stow = 0.8;
 
     public static double open = 0.4;
@@ -44,6 +44,7 @@ public class IntakeSubsystem extends SubsystemBase {
             case OPEN:
                 claw.setPosition(open);
                 break;
+
             case CLOSED:
                 claw.setPosition(closed);
                 break;
@@ -56,7 +57,8 @@ public class IntakeSubsystem extends SubsystemBase {
                 wrist.setPosition(active);
                 break;
             case SLIGHT:
-                
+                wrist.setPosition(slight);
+                break;
             case STOW:
                 wrist.setPosition(stow);
                 break;

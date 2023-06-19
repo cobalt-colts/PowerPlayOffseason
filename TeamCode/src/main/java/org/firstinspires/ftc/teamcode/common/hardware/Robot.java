@@ -108,12 +108,13 @@ public class Robot {
         turret.read();
         vertical.read();
         sensor.read();
-        telemetry.addData("Receiver Open: ", sensor.getCurrState());
-        telemetry.addData("Turret Pos: ", turret.getPos());
-        telemetry.addData("Turret Goal: ", turret.getTargetPosition());
-
-        telemetry.addData("Vertical Pos: ", vertical.getPos());
-        telemetry.addData("Vertical Goal: ", vertical.getTargetPosition());
+        telemetry.addData("uS position: ", drive.getRawDistance());
+//        telemetry.addData("Receiver Open: ", sensor.getCurrState());
+//        telemetry.addData("Turret Pos: ", turret.getPos());
+//        telemetry.addData("Turret Goal: ", turret.getTargetPosition());
+//
+//        telemetry.addData("Vertical Pos: ", vertical.getPos());
+//        telemetry.addData("Vertical Goal: ", vertical.getTargetPosition());
 
     }
 
