@@ -75,6 +75,13 @@ public class TestMovement extends LinearOpMode {
             robotHeading = getRawHeading() - headingOffset;
             headingError = robotHeading - headingGoal;
 
+            while(headingError > Math.PI){
+                headingError -= 2 * Math.PI;
+            }
+
+            while(headingError < -Math.PI){
+                headingError += 2 * Math.PI;
+            }
 
             fwd.setPID(fwdVal.p, fwdVal.i,fwdVal.d);
             rot.setPID(rotVal.p,rotVal.i,rotVal.d);
@@ -82,9 +89,11 @@ public class TestMovement extends LinearOpMode {
             double currFwd = getFwd() - fwdEncoderOffset;
             double currStr = getStr() - strEncoderOffset;
 
-            double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.3,0.3) + 0.02 * Math.signum(goal-currFwd);
-            double strPower = Range.clip(str.calculate(currStr,strafe), -0.5, 0.5);
-            double rotPower = Range.clip(rotVal.p * (robotHeading),-0.5,0.5);
+            double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.6,0.6) + 0.02 * Math.signum(goal-currFwd);
+            double strPower = Range.clip(str.calculate(currStr,strafe), -0.7, 0.7);
+            double rotPower = Range.clip(rotVal.p * (headingError),-0.5,0.5);
+
+
 
             telemetry.addData("heading angle", robotHeading);
             telemetry.addData("heading err" , headingError);

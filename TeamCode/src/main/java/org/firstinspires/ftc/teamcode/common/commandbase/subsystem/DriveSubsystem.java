@@ -6,21 +6,29 @@ import static org.firstinspires.ftc.teamcode.common.drive.StandardTrackingWheelL
 
 import androidx.annotation.GuardedBy;
 
+import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.common.util.Encoder;
 
+@Config
 public class DriveSubsystem {
     public DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private Encoder rightEncoder,frontEncoder;
     public AnalogInput distanceSensor;
 
+    public static double kP = 0;
+    public static PIDCoefficients rotVal = new PIDCoefficients(4,0,0);
+    
     private final Object imuLock = new Object();
     @GuardedBy("imuLock")
     public BNO055IMU imu;
@@ -29,6 +37,8 @@ public class DriveSubsystem {
     private double zeroAngle = 0;
     private double lastVoltage = 0;
 
+    public double lockedTarget;
+    public boolean init = true;
     private Thread imuThread;
 
     public DriveSubsystem(HardwareMap hardwareMap, boolean isAuto){
@@ -52,7 +62,32 @@ public class DriveSubsystem {
             imu.initialize(parameters);
         }
     }
+    
+    public void lockedFieldRelative(double lsx, double lsy, double rsx){
+        if(rsx != 0) {
+            lockedTarget = getAngle();
+        }
 
+        double error = getAngle() - lockedTarget;
+        if(init) error = 0;
+        while(error > Math.PI){
+            error -= 2 * Math.PI;
+        }
+
+        while(error < -Math.PI){
+            error += 2 * Math.PI;
+        }
+        
+        double y = lsy;
+        double x = -lsx * 1.1;
+        double rx = rsx;
+
+        double denom = Math.max(Math.abs(y) + Math.abs(x),1);
+
+
+        setMotorPowers((y+x+rx)/denom + error * kP, (y-x+rx)/denom + error * kP, (y+x-rx)/denom - error * kP,(y-x-rx)/denom - error * kP);
+
+    }
     public void fieldRelative(double lsx,double lsy,double rsx,boolean calibrate){
         //@TODO Add Speed Modifs
         if (calibrate) {

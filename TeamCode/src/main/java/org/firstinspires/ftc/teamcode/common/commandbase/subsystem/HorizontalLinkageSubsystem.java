@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Config
 public class HorizontalLinkageSubsystem extends SubsystemBase {
 
-    private Servo horSlide;
+    public Servo horSlide;
 
     private double targetPosition;
     private double previousPosition = 0.0;
