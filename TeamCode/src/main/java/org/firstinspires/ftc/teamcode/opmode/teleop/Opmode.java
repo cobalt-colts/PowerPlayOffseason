@@ -4,6 +4,8 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.WaitUntilCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -12,6 +14,9 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.HorizontalPositionCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.TurretPositionCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
@@ -34,6 +39,10 @@ public class Opmode extends CommandOpMode {
     private boolean prevY = false;
     private boolean currY = false;
     private boolean locked = false;
+
+    private boolean auto = false;
+    private static int turretPos = 0;
+    private static int slidePos = 2000;
 
     GamepadEx driverOp;
     GamepadEx toolOp;
@@ -66,40 +75,60 @@ public class Opmode extends CommandOpMode {
         telemetry.addData("Locked Target", robot.drive.lockedTarget);
         telemetry.addData("Angle", robot.drive.getAngle());
         robot.read();
-        //intake
 
-        robot.updateClaw(gamepad1,gamepad2);
+        if(toolOp.getButton(GamepadKeys.Button.DPAD_LEFT) && !auto){
+            CommandScheduler.getInstance().schedule(
+                    new VerticalPositionCommand(robot.vertical,slidePos,30,5),
+                    new WaitUntilCommand(() -> robot.vertical.getPos() > 500),
+                    new TurretPositionCommand(robot.turret,turretPos,20,5),
+                    new HorizontalPositionCommand(robot.horizontal,0.3),
+                    new InstantCommand((() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN))),
+                    new InstantCommand(() -> this.auto = false)
+            );
+        }
+
+
+        if(auto){
+            CommandScheduler.getInstance().run();
+        }else {
+            updateRobot();
+        }
+    }
+
+    public void updateRobot(){
+        //intake
+        robot.updateClaw(gamepad1, gamepad2);
         currY = gamepad1.y;
 
         //drivetrain
-        if(currY && !prevY){
+        if (currY && !prevY) {
             locked = !locked;
-            if(locked) robot.drive.lockedTarget = robot.drive.getAngle();
+            if (locked) robot.drive.lockedTarget = robot.drive.getAngle();
         }
 
-        if(locked) {
+        if (locked) {
             robot.drive.lockedFieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX());
-        }else {
+        } else {
             robot.drive.fieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX(), driverOp.getButton(GamepadKeys.Button.X));
         }
 
+        if (CommandScheduler.getInstance().isScheduled())
 
-        //turret
-        robot.turret.setCurrentPower(0.8 * toolOp.getRightX());
+            //turret
+            robot.turret.setCurrentPower(0.8 * toolOp.getRightX());
         //vertical
         robot.vertical.setPower(toolOp.getLeftY());
         //horizontal modifiers
         outModifier = Math.min(0.005, 0.005 - (robot.horizontal.getPos() / 100));
         inModifier = Math.min(0.005, (robot.horizontal.getPos() / 80));
         //horizontal
-        robot.horizontal.setPos(Math.min(0.4,Math.max(0,robot.horizontal.getPos() + (outModifier * toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - inModifier * (toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - 0.002)))));
+        robot.horizontal.setPos(Math.min(0.4, Math.max(0, robot.horizontal.getPos() + (outModifier * toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - inModifier * (toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - 0.002)))));
         //wrist
 
 
-
-        if(gamepad2.y) robot.intake.update(IntakeSubsystem.WristState.STOW);
-        if(gamepad2.b) robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
-        if(gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
+        if (gamepad2.y) robot.intake.update(IntakeSubsystem.WristState.STOW);
+        if (gamepad2.b) robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
+        if (gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //update * write
         robot.loop();
         robot.write();
@@ -107,6 +136,5 @@ public class Opmode extends CommandOpMode {
         telemetry.addData("Locked", locked);
         telemetry.update();
     }
-
 
 }

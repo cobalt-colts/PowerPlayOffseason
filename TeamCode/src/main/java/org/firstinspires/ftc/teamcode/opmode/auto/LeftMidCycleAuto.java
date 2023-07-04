@@ -52,6 +52,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
     public static PIDController fwd,rot,str;
     public static PIDCoefficients fwdVal = new PIDCoefficients(0.1,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.6,0.005,0.02);
+    public double voltage = 12;
 
     ElapsedTime et;
     @Override
@@ -94,6 +95,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
             fwdEncoderOffset = robot.drive.getForwardPosition();
             strEncoderOffset = robot.drive.getLateralPosition();
 
+            voltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
 
         }
 
@@ -139,55 +141,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
 
         while(et.seconds() < 7){
-            robot.horizontal.horSlide.setPosition(0);
-
-            fwd.setPID(fwdVal.p, fwdVal.i,fwdVal.d);
-            rot.setPID(rotVal.p,rotVal.i,rotVal.d);
-            str.setPID(strVal.p,strVal.i,strVal.d);
-
-            robotHeading = robot.drive.getAngle() - headingOffset;
-            headingError = robotHeading - headingGoal;
-
-            while(headingError > Math.PI){
-                headingError -= 2 * Math.PI;
-            }
-
-            while(headingError < -Math.PI){
-                headingError += 2 * Math.PI;
-            }
-
-            double strafe = et.seconds() > 4? 6.5 : 0;
-
-            double currFwd = robot.drive.getForwardPosition() - fwdEncoderOffset;
-            double currStr = robot.drive.getLateralPosition() - strEncoderOffset;
-
-            double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.5,0.5) + 0.01 * Math.signum(goal-currFwd);
-            double strPower = Range.clip(str.calculate(currStr,strafe), -0.5, 0.5) ;
-            double rotPower = Range.clip(rot.calculate(headingError,0),-0.5,0.5);
-
-
-
-            telemetry.addData("uS position: ", robot.drive.getRawDistance());
-
-            telemetry.addData("heading angle", robotHeading);
-            telemetry.addData("heading err" , headingError);
-            telemetry.addData("heading offset", headingOffset);
-            telemetry.addData("heading pwr" , rotPower);
-
-            telemetry.addData("----","----");
-
-            telemetry.addData("currFwd: ",currFwd);
-            telemetry.addData("currStr: ",currStr);
-            telemetry.addData("fwd pwr: ",fwdPower);
-            telemetry.addData("str pwr: ",strPower);
-
-            robot.drive.leftFront.setPower(fwdPower + rotPower - strPower);
-            robot.drive.leftRear.setPower(fwdPower + rotPower + strPower);
-            robot.drive.rightFront.setPower(fwdPower - rotPower - strPower);
-            robot.drive.rightRear.setPower(fwdPower - rotPower + strPower);
-
-            robot.write();
-            telemetry.update();
+            moveRobot();
 
         }
 
@@ -208,6 +162,62 @@ public class LeftMidCycleAuto extends LinearOpMode {
             telemetry.addData("currStr: ",currStr);
             telemetry.update();
         }
+    }
+
+
+
+    public void moveRobot(){
+        robot.horizontal.horSlide.setPosition(0);
+
+        fwd.setPID(fwdVal.p, fwdVal.i,fwdVal.d);
+        rot.setPID(rotVal.p,rotVal.i,rotVal.d);
+        str.setPID(strVal.p,strVal.i,strVal.d);
+
+        robotHeading = robot.drive.getAngle() - headingOffset;
+        headingError = robotHeading - headingGoal;
+
+        while(headingError > Math.PI){
+            headingError -= 2 * Math.PI;
+        }
+
+        while(headingError < -Math.PI){
+            headingError += 2 * Math.PI;
+        }
+
+        double strafe = et.seconds() > 4? 6.5 : 0;
+
+        double currFwd = robot.drive.getForwardPosition() - fwdEncoderOffset;
+        double currStr = robot.drive.getLateralPosition() - strEncoderOffset;
+
+        double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.5,0.5) + 0.01 * Math.signum(goal-currFwd);
+        double strPower = Range.clip(str.calculate(currStr,strafe), -0.5, 0.5) ;
+        double rotPower = Range.clip(rot.calculate(headingError,0),-0.5,0.5);
+
+        fwdPower *= voltage/12;
+        strPower *= voltage/12;
+        rotPower *= voltage/12;
+
+        telemetry.addData("uS position: ", robot.drive.getRawDistance());
+
+        telemetry.addData("heading angle", robotHeading);
+        telemetry.addData("heading err" , headingError);
+        telemetry.addData("heading offset", headingOffset);
+        telemetry.addData("heading pwr" , rotPower);
+
+        telemetry.addData("----","----");
+
+        telemetry.addData("currFwd: ",currFwd);
+        telemetry.addData("currStr: ",currStr);
+        telemetry.addData("fwd pwr: ",fwdPower);
+        telemetry.addData("str pwr: ",strPower);
+
+        robot.drive.leftFront.setPower(fwdPower + rotPower - strPower);
+        robot.drive.leftRear.setPower(fwdPower + rotPower + strPower);
+        robot.drive.rightFront.setPower(fwdPower - rotPower - strPower);
+        robot.drive.rightRear.setPower(fwdPower - rotPower + strPower);
+
+        robot.write();
+        telemetry.update();
     }
 
     public void goPark(){
