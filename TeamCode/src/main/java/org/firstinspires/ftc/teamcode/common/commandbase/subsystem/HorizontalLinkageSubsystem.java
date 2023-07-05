@@ -14,6 +14,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
 public class HorizontalLinkageSubsystem extends SubsystemBase {
+    //Old GB Servo: 0 to 0.4, in to out
+    //New Axon Servo: 0.9 to 0.4, in to out
 
     public Servo horSlide;
 
@@ -42,7 +44,8 @@ public class HorizontalLinkageSubsystem extends SubsystemBase {
 
 
     public void write() {
-        horSlide.setPosition(targetPosition);
+
+        horSlide.setPosition(0.9 - 1.25 * targetPosition);
         previousPosition = targetPosition;
     }
 

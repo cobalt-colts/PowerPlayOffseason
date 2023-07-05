@@ -16,15 +16,16 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftAutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.RightAutoMidCycleCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.HorizontalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.TurretPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
-@Autonomous(name="Left Mid Cycle")
+@Autonomous(name="Right Mid Cycle")
 @Config
-public class LeftMidCycleAuto extends LinearOpMode {
+public class RightMidCycleAuto extends LinearOpMode {
     Robot robot;
     public int currId = 2;
     public boolean park = false;
@@ -58,7 +59,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
         robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
         robot.intake.update(IntakeSubsystem.WristState.STOW);
 
-        LeftAutoMidCycleCommand.setTolerance(30);
+        RightAutoMidCycleCommand.setTolerance(30);
 
         fwd = new PIDController(fwdVal.p, fwdVal.i, fwdVal.d);
         rot = new PIDController(rotVal.p, rotVal.i, rotVal.d);
@@ -106,34 +107,34 @@ public class LeftMidCycleAuto extends LinearOpMode {
         CommandScheduler.getInstance().schedule(
 
 
-                        //new DriveToCycleCommand(robot,telemetry,robot.drive.imu.getAngularOrientation().firstAngle),
-                        new SequentialCommandGroup(
+                //new DriveToCycleCommand(robot,telemetry,robot.drive.imu.getAngularOrientation().firstAngle),
+                new SequentialCommandGroup(
 
-                                //cycle
-                                new WaitCommand(3000),
-                                new LeftAutoMidCycleCommand(robot),
-                                new InstantCommand(() -> LeftAutoMidCycleCommand.setStackHeight(350)),
-                                new LeftAutoMidCycleCommand(robot),
-                                new InstantCommand(() -> LeftAutoMidCycleCommand.setStackHeight(240)),
-                                new LeftAutoMidCycleCommand(robot),
-                                new InstantCommand(() -> LeftAutoMidCycleCommand.setStackHeight(210)),
-                                new LeftAutoMidCycleCommand(robot),
-                                new InstantCommand(() -> LeftAutoMidCycleCommand.setStackHeight(60)),
-                                new LeftAutoMidCycleCommand(robot),
+                        //cycle
+                        new WaitCommand(3000),
+                        new RightAutoMidCycleCommand(robot),
+                        new InstantCommand(() -> RightAutoMidCycleCommand.setStackHeight(350)),
+                        new RightAutoMidCycleCommand(robot),
+                        new InstantCommand(() -> RightAutoMidCycleCommand.setStackHeight(240)),
+                        new RightAutoMidCycleCommand(robot),
+                        new InstantCommand(() -> RightAutoMidCycleCommand.setStackHeight(210)),
+                        new RightAutoMidCycleCommand(robot),
+                        new InstantCommand(() -> RightAutoMidCycleCommand.setStackHeight(60)),
+                        new RightAutoMidCycleCommand(robot),
 
-                                new ParallelCommandGroup(
-                                        new InstantCommand(() -> goPark()),
-                                        new VerticalPositionCommand(robot.vertical,0,30,5000),
-                                        new TurretPositionCommand(robot.turret,0,30,5000),
-                                        new HorizontalPositionCommand(robot.horizontal,0.1)
+                        new ParallelCommandGroup(
+                                new InstantCommand(() -> goPark()),
+                                new VerticalPositionCommand(robot.vertical,0,30,5000),
+                                new TurretPositionCommand(robot.turret,0,30,5000),
+                                new HorizontalPositionCommand(robot.horizontal,0.1)
 
-                                )
                         )
+                )
 
         );
 
 
-        while(et.seconds() < 5){
+        while(et.seconds() < 6){
             moveRobot();
 
         }
@@ -142,7 +143,8 @@ public class LeftMidCycleAuto extends LinearOpMode {
         while (opModeIsActive()){
             robot.read();
 
-            moveRobot();
+            double currFwd = robot.drive.getForwardPosition() - fwdEncoderOffset;
+            double currStr = robot.drive.getLateralPosition() - strEncoderOffset;
 
             CommandScheduler.getInstance().run();
 
@@ -151,6 +153,8 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
             robot.write();
 
+            telemetry.addData("currFwd: ",currFwd);
+            telemetry.addData("currStr: ",currStr);
 
             telemetry.addData("Vertical Pos:", robot.vertical.getPos());
             telemetry.addData("Vertical Target:", robot.vertical.getTargetPosition());
@@ -161,7 +165,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
 
     public void moveRobot(){
-
+        robot.horizontal.horSlide.setPosition(0);
 
         fwd.setPID(fwdVal.p, fwdVal.i,fwdVal.d);
         rot.setPID(rotVal.p,rotVal.i,rotVal.d);
@@ -178,12 +182,9 @@ public class LeftMidCycleAuto extends LinearOpMode {
             headingError += 2 * Math.PI;
         }
 
-
+        double strafe = et.seconds() > 4? -6.5 : 0;
 
         double currFwd = robot.drive.getForwardPosition() - fwdEncoderOffset;
-
-        double strafe = currFwd > 40? 6.5 : 0;
-
         double currStr = robot.drive.getLateralPosition() - strEncoderOffset;
 
         double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.4,0.4) + 0.01 * Math.signum(goal-currFwd);

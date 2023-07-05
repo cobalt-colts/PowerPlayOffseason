@@ -11,6 +11,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Servo claw;
     private Servo wrist;
+    private Servo guide;
 
     private DigitalChannel receiver;
 
@@ -32,9 +33,17 @@ public class IntakeSubsystem extends SubsystemBase {
         STOW
     }
 
+    public enum GuideState{
+        LEFT,
+        MIDLEFT,
+        MIDRIGHT,
+        RIGHT
+    }
+
     public IntakeSubsystem(HardwareMap hardwareMap, boolean isAuto){
         claw = hardwareMap.get(Servo.class, "claw");
         wrist = hardwareMap.get(Servo.class,"wrist");
+        guide = hardwareMap.get(Servo.class, "guide");
 
 
     }
@@ -65,8 +74,25 @@ public class IntakeSubsystem extends SubsystemBase {
         }
     }
 
+    public void update(GuideState guideState){
+        switch(guideState){
+            case LEFT:
+                wrist.setPosition(0);
+                break;
+            case MIDLEFT:
+                wrist.setPosition(0.3);
+                break;
+            case MIDRIGHT:
+                wrist.setPosition(0.7);
+                break;
+            case RIGHT:
+                wrist.setPosition(1);
+                break;
+        }
+    }
     //testing
     public void setClawPosition(double pos){ claw.setPosition(pos);}
     public void setWristPosition(double pos){ wrist.setPosition(pos);}
+    public void setGuidePosition(double pos){ guide.setPosition(pos);}
 
 }

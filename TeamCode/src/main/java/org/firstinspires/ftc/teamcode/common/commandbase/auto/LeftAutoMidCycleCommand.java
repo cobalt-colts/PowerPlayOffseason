@@ -11,11 +11,11 @@ import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositi
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
-public class AutoMidCycleCommand extends SequentialCommandGroup {
+public class LeftAutoMidCycleCommand extends SequentialCommandGroup {
     private static int TOLERANCE = 10;
     private static int stackHeight = 430;
 
-    public AutoMidCycleCommand(Robot robot){
+    public LeftAutoMidCycleCommand(Robot robot){
         super(
           new SequentialCommandGroup(
                   //SCORE ON MEDIUM

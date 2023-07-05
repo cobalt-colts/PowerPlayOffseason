@@ -24,7 +24,6 @@ import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 @Config
 public class Opmode extends LinearOpMode {
     private Robot robot;
-    private Servo guide;
     private ElapsedTime timer;
 
     private DigitalChannel receiver;
@@ -32,10 +31,6 @@ public class Opmode extends LinearOpMode {
     private double outModifier = 0.0;
     private double inModifier = 0.0;
 
-    private static double guideStowLeft = 0;
-    private static double guideActiveLeft = 0.4;
-    private static double guideStowRight = 0.6;
-    private static double guideActiveRight = 1;
 
     private boolean prevY = false;
     private boolean currY = false;
@@ -53,7 +48,7 @@ public class Opmode extends LinearOpMode {
         CommandScheduler.getInstance().reset();
 
         robot = new Robot(hardwareMap, telemetry, false);
-        guide = hardwareMap.get(Servo.class, "guide");
+
         robot.reset();
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), this.telemetry);
 
@@ -102,7 +97,6 @@ public class Opmode extends LinearOpMode {
 
             telemetry.addData("Vertical Goal", robot.vertical.getTargetPosition());
             telemetry.addData("Vertical Curr", robot.vertical.getPos());
-            telemetry.addData("Vertical Command Scheduled", CommandScheduler.getInstance().isScheduled(new VerticalPositionCommand(robot.vertical, slidePos, 30, 5)));
             telemetry.update();
         }
     }
@@ -142,9 +136,6 @@ public class Opmode extends LinearOpMode {
         if (gamepad2.b) robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
         if (gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //update * write
-
-        if(gamepad1.dpad_left) guide.setPosition(0);
-        if(gamepad1.dpad_right) guide.setPosition(1);
 
         telemetry.addData("Locked", locked);
 
