@@ -51,7 +51,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
     public double strEncoderOffset = 0;
 
     public static PIDController fwd,rot,str;
-    public static PIDCoefficients fwdVal = new PIDCoefficients(0.1,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.6,0.005,0.02);
+    public static PIDCoefficients fwdVal = new PIDCoefficients(0.08,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.6,0.005,0.02);
     public double voltage = 12;
 
     ElapsedTime et;
@@ -119,13 +119,13 @@ public class LeftMidCycleAuto extends LinearOpMode {
                                 //cycle
                                 new WaitCommand(3000),
                                 new AutoMidCycleCommand(robot),
-                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(250)),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(350)),
                                 new AutoMidCycleCommand(robot),
-                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(140)),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(240)),
                                 new AutoMidCycleCommand(robot),
-                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(110)),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(210)),
                                 new AutoMidCycleCommand(robot),
-                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(30)),
+                                new InstantCommand(() -> AutoMidCycleCommand.setStackHeight(60)),
                                 new AutoMidCycleCommand(robot),
 
                                 new ParallelCommandGroup(
@@ -154,12 +154,16 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
             CommandScheduler.getInstance().run();
 
-            robot.loop();
+            //@TODO verify
+            robot.loop(true);
 
             robot.write();
 
             telemetry.addData("currFwd: ",currFwd);
             telemetry.addData("currStr: ",currStr);
+
+            telemetry.addData("Vertical Pos:", robot.vertical.getPos());
+            telemetry.addData("Vertical Target:", robot.vertical.getTargetPosition());
             telemetry.update();
         }
     }
@@ -189,7 +193,7 @@ public class LeftMidCycleAuto extends LinearOpMode {
         double currFwd = robot.drive.getForwardPosition() - fwdEncoderOffset;
         double currStr = robot.drive.getLateralPosition() - strEncoderOffset;
 
-        double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.5,0.5) + 0.01 * Math.signum(goal-currFwd);
+        double fwdPower = Range.clip(fwd.calculate(currFwd, goal),-0.4,0.4) + 0.01 * Math.signum(goal-currFwd);
         double strPower = Range.clip(str.calculate(currStr,strafe), -0.5, 0.5) ;
         double rotPower = Range.clip(rot.calculate(headingError,0),-0.5,0.5);
 
@@ -197,12 +201,13 @@ public class LeftMidCycleAuto extends LinearOpMode {
         strPower *= voltage/12;
         rotPower *= voltage/12;
 
-        telemetry.addData("uS position: ", robot.drive.getRawDistance());
+//        telemetry.addData("uS position: ", robot.drive.getRawDistance());
+//
+//        telemetry.addData("heading angle", robotHeading);
+//        telemetry.addData("heading err" , headingError);
+//        telemetry.addData("heading offset", headingOffset);
+//        telemetry.addData("heading pwr" , rotPower);
 
-        telemetry.addData("heading angle", robotHeading);
-        telemetry.addData("heading err" , headingError);
-        telemetry.addData("heading offset", headingOffset);
-        telemetry.addData("heading pwr" , rotPower);
 
         telemetry.addData("----","----");
 

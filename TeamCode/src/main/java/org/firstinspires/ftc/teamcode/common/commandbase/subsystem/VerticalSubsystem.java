@@ -66,8 +66,8 @@ public class VerticalSubsystem extends SubsystemBase {
     }
 
 
-    public void loop() {
-        if(!isAuto) return; //teleop doesnt use PID
+    public void loop(boolean override) {
+        if(!isAuto && !override) return; //teleop doesnt use PID
 
         this.controller.setPID(P, I, D);
 

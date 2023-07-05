@@ -31,7 +31,7 @@ public class TestVertical extends LinearOpMode {
             telemetry.addData("Goal: ", ticks);
             telemetry.addData("Current: ", robot.vertical.getPos());
             telemetry.update();
-            robot.loop();
+            robot.loop(false);
             robot.write();
         }
     }

@@ -1,16 +1,16 @@
 package org.firstinspires.ftc.teamcode.opmode.teleop;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.WaitUntilCommand;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -21,7 +21,8 @@ import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsyst
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
 @TeleOp
-public class Opmode extends CommandOpMode {
+@Config
+public class Opmode extends LinearOpMode {
     private Robot robot;
     private Servo guide;
     private ElapsedTime timer;
@@ -40,58 +41,69 @@ public class Opmode extends CommandOpMode {
     private boolean currY = false;
     private boolean locked = false;
 
-    private boolean auto = false;
-    private static int turretPos = 0;
-    private static int slidePos = 2000;
-
+    private boolean macro = false;
+    public static int turretPos = 1000;
+    public static int slidePos = 1500;
+    public static double horPos = 0.25;
     GamepadEx driverOp;
     GamepadEx toolOp;
 
     @Override
-    public void initialize(){
+    public void runOpMode() {
         CommandScheduler.getInstance().reset();
 
-        robot = new Robot(hardwareMap,telemetry,false);
+        robot = new Robot(hardwareMap, telemetry, false);
         guide = hardwareMap.get(Servo.class, "guide");
         robot.reset();
-        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(),this.telemetry);
-
-
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), this.telemetry);
 
 
         driverOp = new GamepadEx(gamepad1);
         toolOp = new GamepadEx(gamepad2);
-    }
 
+        waitForStart();
 
-    @Override
-    public void run(){
-        if (timer == null) {
-            timer = new ElapsedTime();
-            robot.reset();
-            robot.drive.startIMUThread(this);
-            robot.drive.lockedTarget = robot.drive.getAngle();
-        }
-        telemetry.addData("Locked Target", robot.drive.lockedTarget);
-        telemetry.addData("Angle", robot.drive.getAngle());
-        robot.read();
+        while (opModeIsActive()) {
+            if (timer == null) {
+                timer = new ElapsedTime();
+                robot.reset();
+                robot.drive.startIMUThread(this);
+                robot.drive.lockedTarget = robot.drive.getAngle();
+            }
+            telemetry.addData("Locked Target", robot.drive.lockedTarget);
+            telemetry.addData("Angle", robot.drive.getAngle());
+            robot.read();
 
-        if(toolOp.getButton(GamepadKeys.Button.DPAD_LEFT) && !auto){
-            CommandScheduler.getInstance().schedule(
-                    new VerticalPositionCommand(robot.vertical,slidePos,30,5),
-                    new WaitUntilCommand(() -> robot.vertical.getPos() > 500),
-                    new TurretPositionCommand(robot.turret,turretPos,20,5),
-                    new HorizontalPositionCommand(robot.horizontal,0.3),
-                    new InstantCommand((() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN))),
-                    new InstantCommand(() -> this.auto = false)
-            );
-        }
+            if (gamepad2.dpad_left && !macro) {
+                macro = true;
+            }
 
+            while(opModeIsActive()) {
+                if (macro) {
 
-        if(auto){
-            CommandScheduler.getInstance().run();
-        }else {
-            updateRobot();
+                    telemetry.addData("Auto", macro);
+                    robot.vertical.setTargetPos(slidePos);
+                    if(robot.vertical.getPos() < 500) break;
+                    robot.turret.setTargetPos(turretPos);
+                    robot.horizontal.setPos(horPos);
+                    robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
+
+                    if(Math.abs(robot.turret.getPos() - turretPos) > 20 && Math.abs(robot.vertical.getPos() - slidePos) > 20) break;
+                    macro = false;
+
+                } else {
+                    updateRobot();
+                }
+                break;
+            }
+
+            robot.loop(macro);
+            robot.write();
+
+            telemetry.addData("Vertical Goal", robot.vertical.getTargetPosition());
+            telemetry.addData("Vertical Curr", robot.vertical.getPos());
+            telemetry.addData("Vertical Command Scheduled", CommandScheduler.getInstance().isScheduled(new VerticalPositionCommand(robot.vertical, slidePos, 30, 5)));
+            telemetry.update();
         }
     }
 
@@ -130,11 +142,12 @@ public class Opmode extends CommandOpMode {
         if (gamepad2.b) robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
         if (gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //update * write
-        robot.loop();
-        robot.write();
+
+        if(gamepad1.dpad_left) guide.setPosition(0);
+        if(gamepad1.dpad_right) guide.setPosition(1);
 
         telemetry.addData("Locked", locked);
-        telemetry.update();
+
     }
 
 }

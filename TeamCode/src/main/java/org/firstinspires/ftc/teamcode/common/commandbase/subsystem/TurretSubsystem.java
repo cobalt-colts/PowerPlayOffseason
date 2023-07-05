@@ -55,8 +55,8 @@ public class TurretSubsystem extends SubsystemBase {
         this.isAuto = isAuto;
     }
 
-    public void loop() {
-        if(!isAuto) return;
+    public void loop(boolean override) {
+        if(!isAuto && !override) return;
 
         this.controller.setPID(P, I, D);
 

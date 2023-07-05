@@ -35,7 +35,7 @@ public class TestDriveCommand extends LinearOpMode {
             robot.turret.setTargetPos(0);
             CommandScheduler.getInstance().run();
 
-            robot.loop();
+            robot.loop(false);
 
             robot.write();
 

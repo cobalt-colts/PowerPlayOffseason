@@ -118,10 +118,12 @@ public class Robot {
 
     }
 
-    public void loop(){
+    public void loop(boolean auto){
         //if(isAuto) drive.update();
-        turret.loop();
-        if(isAuto) vertical.loop();
+
+        //if auto is true, then we enable PID control
+        turret.loop(auto);
+        vertical.loop(auto);
         horizontal.loop();
 
     }
