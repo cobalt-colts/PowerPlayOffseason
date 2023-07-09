@@ -14,14 +14,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class TurretSubsystem extends SubsystemBase {
 
     private DcMotorEx turret;
-    private ProfiledPIDController controller;
+    public ProfiledPIDController controller;
 
     public static double P = 0.002;
     public static double I = 0.0;
     public static double D = 0.00025;
 
-    public static double maxVel = 2500;
-    public static double maxAcc = 1900;
+    public static double maxVel = 2400; //2500
+    public static double maxAcc = 1800; //1900
 
     private ElapsedTime voltageTimer;
     private VoltageSensor voltageSensor;
@@ -45,6 +45,7 @@ public class TurretSubsystem extends SubsystemBase {
 
         controller = new ProfiledPIDController(P,I,D, new TrapezoidProfile.Constraints(maxVel,maxAcc));
         controller.setPID(P, I, D);
+        controller.setTolerance(20,20);
 
         this.voltageTimer = new ElapsedTime();
         voltageTimer.reset();

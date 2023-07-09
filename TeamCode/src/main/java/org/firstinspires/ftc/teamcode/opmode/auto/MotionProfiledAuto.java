@@ -24,9 +24,9 @@ import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositi
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
-@Autonomous(name="Left Mid Cycle")
+@Autonomous(name="Motion Profiled Auton")
 @Config
-public class LeftMidCycleAuto extends LinearOpMode {
+public class MotionProfiledAuto extends LinearOpMode {
     Robot robot;
     public int currId = 2;
     public boolean park = false;
@@ -49,12 +49,11 @@ public class LeftMidCycleAuto extends LinearOpMode {
     public double currStr;
 
     public static ProfiledPIDController fwd,str;
-    public static int max_vel = 40;
-    public static int max_acc = 40;
+    public static int max_vel = 50;
+    public static int max_acc = 50;
     public static PIDController rot;
-    public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.2,0.005,0.02);
+    public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.3,0.005,0.02);
     public double voltage = 12;
-
     private double loopTime;
     private double endTime;
 
@@ -109,6 +108,8 @@ public class LeftMidCycleAuto extends LinearOpMode {
 
         waitForStart();
 
+        robot.vision.stopStreaming();
+
         headingOffset = robot.drive.imu.getAngularOrientation().firstAngle;
 
         robot.drive.startIMUThread(this);
@@ -120,47 +121,44 @@ public class LeftMidCycleAuto extends LinearOpMode {
         CommandScheduler.getInstance().schedule(
 
 
-                        //new DriveToCycleCommand(robot,telemetry,robot.drive.imu.getAngularOrientation().firstAngle),
-                        new SequentialCommandGroup(
-                                //cycle
-                                new LeftAutoMidCycleCommand(robot,470),
-                                new LeftAutoMidCycleCommand(robot,360),
-                                new LeftAutoMidCycleCommand(robot,250),
-                                new LeftAutoMidCycleCommand(robot,140),
-                                new LeftAutoMidCycleCommand(robot,70),
-                                new InstantCommand(() -> park = true),
-                                new ParallelCommandGroup(
-                                        new VerticalPositionCommand(robot.vertical,0,30,5000),
-                                        new TurretPositionCommand(robot.turret,0,30,5000),
-                                        new HorizontalPositionCommand(robot.horizontal,0.1)
+                //new DriveToCycleCommand(robot,telemetry,robot.drive.imu.getAngularOrientation().firstAngle),
+                new SequentialCommandGroup(
+                        //cycle
+                        new LeftAutoMidCycleCommand(robot,470),
+                        new LeftAutoMidCycleCommand(robot,360),
+                        new LeftAutoMidCycleCommand(robot,250),
+                        new LeftAutoMidCycleCommand(robot,140),
+                        new LeftAutoMidCycleCommand(robot,70),
+                        new InstantCommand(() -> park = true),
+                        new ParallelCommandGroup(
+                                new VerticalPositionCommand(robot.vertical,0,30,5000),
+                                new TurretPositionCommand(robot.turret,0,30,5000),
+                                new HorizontalPositionCommand(robot.horizontal,0.1)
 
-                                )
                         )
+                )
 
         );
 
 
-        while(et.seconds() < 5){
+        while(et.seconds() < 3){
             robot.read();
 
-            robot.vertical.setTargetPos(0);
-//            robot.turret.setTargetPos(-2000);
-
+            robot.vertical.setTargetPos(500);
+            robot.turret.setTargetPos(-2000);
+            robot.horizontal.setPos(0.1);
             if(currFwd < 40) moveRobot(goal,0);
             else moveRobot(goal,7);
 
             robot.loop(true);
-            telemetry.update();
             robot.write();
-
         }
+
         robot.vertical.setTargetPos(980);
 
         while (opModeIsActive()){
 
             robot.read();
-
-            robot.loop(true);
 
             if(!park) {
                 moveRobot(goal,7);
@@ -170,15 +168,16 @@ public class LeftMidCycleAuto extends LinearOpMode {
             CommandScheduler.getInstance().run();
 
             //@TODO verify
+            robot.loop(true);
 
-
+            robot.write();
 
             double loop = System.nanoTime();
             telemetry.addData("hz ", 1000000000/(loop-loopTime));
             loopTime = loop;
+
             telemetry.update();
 
-            robot.write();
         }
     }
 
@@ -234,6 +233,8 @@ public class LeftMidCycleAuto extends LinearOpMode {
         robot.drive.rightFront.setPower(fwdPower - rotPower - strPower);
         robot.drive.rightRear.setPower(fwdPower - rotPower + strPower);
 
+        //robot.write();
+        //telemetry.update();
     }
 
 }

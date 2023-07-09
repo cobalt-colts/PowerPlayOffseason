@@ -114,6 +114,9 @@ public class AprilTagDetector extends LinearOpMode {
         }
     }
 
+    public void stopStreaming(){
+        camera.stopStreaming();
+    }
     public void tagToTelemetry(AprilTagDetection detection)
     {
         telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));

@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.common.util.Encoder;
 
@@ -26,7 +27,7 @@ public class DriveSubsystem {
     private Encoder rightEncoder,frontEncoder;
     public AnalogInput distanceSensor;
 
-    public static double kP = 0;
+    public static double kP = 3;
     public static PIDCoefficients rotVal = new PIDCoefficients(4,0,0);
     
     private final Object imuLock = new Object();
@@ -63,13 +64,12 @@ public class DriveSubsystem {
         }
     }
     
-    public void lockedFieldRelative(double lsx, double lsy, double rsx){
+    public void lockedFieldRelative(double lsx, double lsy, double rsx, Telemetry telemetry){
         if(rsx != 0) {
             lockedTarget = getAngle();
         }
 
         double error = getAngle() - lockedTarget;
-        if(init) error = 0;
         while(error > Math.PI){
             error -= 2 * Math.PI;
         }
@@ -79,13 +79,15 @@ public class DriveSubsystem {
         }
         
         double y = lsy;
-        double x = -lsx * 1.1;
+        double x = lsx * 1.1;
         double rx = rsx;
 
         double denom = Math.max(Math.abs(y) + Math.abs(x),1);
 
 
         setMotorPowers((y+x+rx)/denom + error * kP, (y-x+rx)/denom + error * kP, (y+x-rx)/denom - error * kP,(y-x-rx)/denom - error * kP);
+        telemetry.addData("Error", error);
+        telemetry.addData("LF Power",(y+x+rx)/denom + error * kP );
 
     }
     public void fieldRelative(double lsx,double lsy,double rsx,boolean calibrate){
