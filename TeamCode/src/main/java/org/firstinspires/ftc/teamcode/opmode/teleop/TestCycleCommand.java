@@ -5,13 +5,13 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftAutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.left.LeftAutoMidCycleCommand;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
 
 @Config
@@ -51,8 +51,9 @@ public class TestCycleCommand extends LinearOpMode {
 
             voltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
         }
-        waitForStart();
 
+
+        waitForStart();
         while(opModeIsActive()){
             moveRobot(0,0);
             if(gamepad2.x){
@@ -69,6 +70,7 @@ public class TestCycleCommand extends LinearOpMode {
             telemetry.addData("hz ", 1000000000/(loop-loopTime));
             loopTime = loop;
             CommandScheduler.getInstance().run();
+
 
             telemetry.update();
             robot.write();

@@ -35,10 +35,13 @@ public class Opmode extends LinearOpMode {
     private boolean currY = false;
     private boolean locked = false;
 
+    boolean prevGuide = false;
+    boolean slow = false;
+
     private boolean macro = false;
     public static int turretPos = -400;
     public static int slidePos = 1600;
-    public static double horPos = 0.2;
+    public static double horPos = 0.0;
 
     public static int backPos = -1600;
     GamepadEx driverOp;
@@ -63,6 +66,7 @@ public class Opmode extends LinearOpMode {
         robot.reset();
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), this.telemetry);
 
+        robot.horizontal.horSlide.setPosition(0.5);
 
         driverOp = new GamepadEx(gamepad1);
         toolOp = new GamepadEx(gamepad2);
@@ -83,21 +87,16 @@ public class Opmode extends LinearOpMode {
             switch(macroState){
                 case OFF:
                     updateRobot();
-                    if (gamepad2.dpad_left) macroState = Macro.LEFT_HIGH;
+                    if (gamepad2.dpad_up) macroState = Macro.LEFT_HIGH;
                     else if(gamepad2.dpad_down) macroState = Macro.BACK;
-                    else if(gamepad2.dpad_up) macroState = Macro.FRONT;
-                    else if(gamepad2.dpad_right) macroState = Macro.RIGHT_HIGH;
                     break;
                 case LEFT_HIGH:
                     macro = true;
                     telemetry.addData("Auto: ", macroState.toString());
-                    robot.horizontal.setPos(0);
-                    robot.vertical.setTargetPos(slidePos);
-                    if(robot.vertical.getPos() < 500) break;
-                    robot.turret.setTargetPos(turretPos);
+                    robot.vertical.setTargetPos(1517);
+                    robot.turret.setTargetPos(robot.turret.getPos());
                     robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
                     if(Math.abs(robot.turret.getPos() - turretPos) > 20 && Math.abs(robot.vertical.getPos() - slidePos) > 20) break;
-                    robot.horizontal.setPos(horPos);
                     macroState = Macro.FINISHED;
                     break;
                 case RIGHT_HIGH:
@@ -128,10 +127,8 @@ public class Opmode extends LinearOpMode {
                 case BACK:
                     macro = true;
                     telemetry.addData("Auto: ", macroState.toString());
-                    robot.intake.update(IntakeSubsystem.WristState.SLIGHT);
-                    robot.horizontal.setPos(0.05);
-                    robot.vertical.setTargetPos(100);
-                    robot.turret.setTargetPos(backPos);
+                    robot.vertical.setTargetPos(73);
+                    robot.turret.setTargetPos(robot.turret.getPos());
                     if(Math.abs(robot.turret.getPos() - backPos) > 20 && Math.abs(robot.vertical.getPos() - 100) > 20) break;
                     robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
                     macroState = Macro.FINISHED;
@@ -142,7 +139,7 @@ public class Opmode extends LinearOpMode {
                     break;
             }
 
-            if(gamepad2.guide) macroState = Macro.FINISHED;
+            if(gamepad2.left_stick_button) macroState = Macro.FINISHED;
             robot.loop(macro);
             robot.write();
 
@@ -171,7 +168,10 @@ public class Opmode extends LinearOpMode {
             robot.drive.fieldRelative(driverOp.getLeftX(), driverOp.getLeftY(), driverOp.getRightX(), driverOp.getButton(GamepadKeys.Button.X));
         }
 
-        double horPos = Math.min(0.4, Math.max(0, robot.horizontal.getPos() + 0.02 * toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - 0.02*toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER)));
+        double horPos =
+                (!gamepad2.touchpad_finger_1 ? Math.min(0.4, Math.max(0, robot.horizontal.getPos() + 0.02 *
+                toolOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - 0.02*toolOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER)))
+                : (gamepad2.touchpad_finger_1_x + 1)/ 5.0);
 
 
         //turret
@@ -181,7 +181,11 @@ public class Opmode extends LinearOpMode {
         robot.vertical.setPower(toolOp.getLeftY());
 
         //horizontal
-        robot.horizontal.setPos(horPos);
+
+        if(gamepad2.guide && !prevGuide){
+            slow = !slow;
+        }
+        robot.horizontal.setPos(slow ? 0.5 * horPos : horPos);
         //wrist
 
 
@@ -190,10 +194,6 @@ public class Opmode extends LinearOpMode {
         if (gamepad2.a) robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //update * write
 
-        if(gamepad2.touchpad_finger_1){
-            guideX = (gamepad2.touchpad_finger_1_x+1)/2;
-        }
-        robot.intake.setGuidePosition(guideX);
 
         telemetry.addData("Locked", locked);
 

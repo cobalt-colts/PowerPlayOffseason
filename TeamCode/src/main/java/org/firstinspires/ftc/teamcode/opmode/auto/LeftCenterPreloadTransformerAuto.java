@@ -12,31 +12,35 @@ import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftAutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftCenterPreloadTransformerCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.left.LeftAutoMidCycleCommand;
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftCenterPreloadCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.HorizontalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.TurretPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.commands.VerticalPositionCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.common.hardware.Robot;
+import org.firstinspires.ftc.teamcode.opmode.auto.right.RightHighMotionProfiledAuto;
 
-@Autonomous(name="Motion Profiled Auton")
+@Autonomous(name="Left Center Transformer Preload")
 @Config
-public class MotionProfiledAuto extends LinearOpMode {
+public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
     Robot robot;
     public int currId = 2;
-    public boolean park = false;
-
+    public boolean goPark = false;
+    public boolean goTransformer = false;
     public enum Location {
         LEFT, MIDDLE, RIGHT
     }
     Location location = Location.MIDDLE;
 
-    public static int goal = 50;
+    public static int goal = 79;
 
     public double headingOffset = 0;
     public double robotHeading = 0;
@@ -49,13 +53,14 @@ public class MotionProfiledAuto extends LinearOpMode {
     public double currStr;
 
     public static ProfiledPIDController fwd,str;
-    public static int max_vel = 50;
-    public static int max_acc = 50;
+    public static int max_vel = 30;
+    public static int max_acc = 30;
     public static PIDController rot;
     public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.3,0.005,0.02);
     public double voltage = 12;
-    private double loopTime;
-    private double endTime;
+
+    public boolean preload = false;
+    public boolean transformer = false;
 
     ElapsedTime et;
     @Override
@@ -65,21 +70,20 @@ public class MotionProfiledAuto extends LinearOpMode {
 
         robot = new Robot(hardwareMap, telemetry,true);
 
-
         robot.intake.update(IntakeSubsystem.ClawState.CLOSED);
         robot.intake.update(IntakeSubsystem.WristState.STOW);
-        robot.intake.setGuidePosition(0);
 
         LeftAutoMidCycleCommand.setTolerance(30);
 
         fwd = new ProfiledPIDController(fwdVal.p, fwdVal.i, fwdVal.d, new TrapezoidProfile.Constraints(max_vel,max_acc));
         rot = new PIDController(rotVal.p, rotVal.i, rotVal.d);
-        str = new ProfiledPIDController(strVal.p, strVal.i, strVal.d, new TrapezoidProfile.Constraints(40,20));
+        str = new ProfiledPIDController(strVal.p, strVal.i, strVal.d, new TrapezoidProfile.Constraints(30,20)); //40
 
         et = new ElapsedTime();
 
         while(!isStarted()){
             robot.vision.runAprilTag();
+            telemetry.update();
             if(robot.vision.getAprilTag() != null) {
                 currId = robot.vision.getAprilTag().id;
             }
@@ -95,8 +99,6 @@ public class MotionProfiledAuto extends LinearOpMode {
                     break;
             }
 
-            robot.horizontal.horSlide.setPosition(0.9);
-
             fwdEncoderOffset = robot.drive.getForwardPosition();
             strEncoderOffset = robot.drive.getLateralPosition();
 
@@ -104,17 +106,17 @@ public class MotionProfiledAuto extends LinearOpMode {
 
             telemetry.addData("Location: ", currId);
             telemetry.update();
+
         }
 
         waitForStart();
-
-        robot.vision.stopStreaming();
 
         headingOffset = robot.drive.imu.getAngularOrientation().firstAngle;
 
         robot.drive.startIMUThread(this);
 
-        //robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
+        robot.horizontal.setPos(0.1);
+        robot.intake.update(IntakeSubsystem.WristState.ACTIVE);
         //robot.drive.followTrajectorySequenceAsync(traj1);
         et.reset();
 
@@ -123,72 +125,82 @@ public class MotionProfiledAuto extends LinearOpMode {
 
                 //new DriveToCycleCommand(robot,telemetry,robot.drive.imu.getAngularOrientation().firstAngle),
                 new SequentialCommandGroup(
-                        //cycle
-                        new LeftAutoMidCycleCommand(robot,470),
-                        new LeftAutoMidCycleCommand(robot,360),
-                        new LeftAutoMidCycleCommand(robot,250),
-                        new LeftAutoMidCycleCommand(robot,140),
-                        new LeftAutoMidCycleCommand(robot,70),
-                        new InstantCommand(() -> park = true),
-                        new ParallelCommandGroup(
-                                new VerticalPositionCommand(robot.vertical,0,30,5000),
-                                new TurretPositionCommand(robot.turret,0,30,5000),
-                                new HorizontalPositionCommand(robot.horizontal,0.1)
 
-                        )
+                        //cycle
+
+                        new LeftCenterPreloadTransformerCommand(robot),
+                        new InstantCommand(() -> preload = true)
+//                        new ParallelCommandGroup(
+//                                new InstantCommand(() -> goPark()),
+//                                new VerticalPositionCommand(robot.vertical,0,30,5000),
+//                                new TurretPositionCommand(robot.turret,0,30,5000),
+//                                new HorizontalPositionCommand(robot.horizontal,0.1)
+//
+//                        )
                 )
 
         );
 
 
-        while(et.seconds() < 3){
-            robot.read();
-
-            robot.vertical.setTargetPos(500);
-            robot.turret.setTargetPos(-2000);
-            robot.horizontal.setPos(0.1);
-            if(currFwd < 40) moveRobot(goal,0);
-            else moveRobot(goal,7);
+        while(et.seconds() < 4){
+            moveRobot(goal,0);
 
             robot.loop(true);
             robot.write();
         }
 
-        robot.vertical.setTargetPos(980);
-
         while (opModeIsActive()){
-
             robot.read();
 
-            if(!park) {
-                moveRobot(goal,7);
-            }else{
-                moveRobot(goal,location == Location.MIDDLE ? 0 : (location == Location.RIGHT) ? 30 : -30);
-            }
+
+
             CommandScheduler.getInstance().run();
+
+
+            if (preload){ //scored preload
+
+
+                moveRobot((currStr > 45) ? 85 : 80, 50);
+                //go to (52,0) -> (75,0), (75,50), (80,50)
+                if(currFwd > 83 && !transformer){
+                    transformer = true;
+                    CommandScheduler.getInstance().schedule(
+                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.ACTIVE)),
+                            new WaitCommand(200),
+                            new HorizontalPositionCommand(robot.horizontal,0.2),
+                            new WaitCommand(200),
+                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.CLOSED)),
+                            new WaitCommand(200),
+                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.STOW))
+                                    .andThen(new HorizontalPositionCommand(robot.horizontal,0)
+                                            .andThen(new InstantCommand(() -> goPark = true)))
+
+                    );
+                }
+
+                if(goPark){ //goPark
+                    moveRobot(goal, location == Location.LEFT ? 50 : (location == Location.MIDDLE) ? 25 : 0);
+                }
+                //Center Auto parking is weird. L,M,R corresponds to 1,2,3 signal zones
+
+            }else{ //Did not score preload
+                moveRobot(goal,0);
+            }
 
             //@TODO verify
             robot.loop(true);
 
             robot.write();
 
-            double loop = System.nanoTime();
-            telemetry.addData("hz ", 1000000000/(loop-loopTime));
-            loopTime = loop;
-
-            telemetry.update();
 
         }
     }
 
 
 
+
+
     public void moveRobot(double forward, double strafe){
-
-
-        fwd.setPID(fwdVal.p, fwdVal.i,fwdVal.d);
-        rot.setPID(rotVal.p,rotVal.i,rotVal.d);
-        str.setPID(strVal.p,strVal.i,strVal.d);
 
         robotHeading = robot.drive.getAngle() - headingOffset;
         headingError = robotHeading - headingGoal;
@@ -217,24 +229,25 @@ public class MotionProfiledAuto extends LinearOpMode {
         strPower *= voltage/14;
         rotPower *= voltage/14;
 
-
-        telemetry.addData("Vertical Pos:", robot.vertical.getPos());
-        telemetry.addData("Vertical Target:", robot.vertical.getTargetPosition());
-
-        telemetry.addData("----","----");
-
-        telemetry.addData("currFwd: ",currFwd);
-        telemetry.addData("currStr: ",currStr);
-        telemetry.addData("fwd pwr: ",fwdPower);
-        telemetry.addData("str pwr: ",strPower);
-
         robot.drive.leftFront.setPower(fwdPower + rotPower - strPower);
         robot.drive.leftRear.setPower(fwdPower + rotPower + strPower);
         robot.drive.rightFront.setPower(fwdPower - rotPower - strPower);
         robot.drive.rightRear.setPower(fwdPower - rotPower + strPower);
 
+
+        telemetry.addData("Going To: ", forward);
+        telemetry.addData("Going To: ", strafe);
+
+        telemetry.addData("Preload: ", preload);
+        telemetry.addData("Curr Fwd: ", currFwd);
+        telemetry.addData("Curr Str: ", currStr);
         //robot.write();
-        //telemetry.update();
+        telemetry.update();
     }
+    public void goPark(){
+
+    }
+
+
 
 }

@@ -16,7 +16,7 @@ public class VerticalSubsystem extends SubsystemBase {
 
     private DcMotorEx leftSlide;
     private DcMotorEx rightSlide;
-    private ProfiledPIDController controller;
+    public ProfiledPIDController controller;
 
     public static double P = 0.005;
     public static double I = 0.0;
@@ -24,7 +24,7 @@ public class VerticalSubsystem extends SubsystemBase {
     public static double F = 0.001;
 
     public static double maxVel = 4000;
-    public static double maxAcc = 2200;
+    public static double maxAcc = 2200; //2200
 
 
     private ElapsedTime voltageTimer;
@@ -55,7 +55,7 @@ public class VerticalSubsystem extends SubsystemBase {
 
         controller = new ProfiledPIDController(P,I,D, new TrapezoidProfile.Constraints(maxVel,maxAcc));
         controller.setPID(P, I, D);
-
+        controller.setTolerance(20,20); //10 10   //30 30
         this.voltageTimer = new ElapsedTime();
         voltageTimer.reset();
 

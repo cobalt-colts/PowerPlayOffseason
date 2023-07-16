@@ -25,7 +25,6 @@ import org.firstinspires.ftc.teamcode.common.util.Encoder;
 public class DriveSubsystem {
     public DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private Encoder rightEncoder,frontEncoder;
-    public AnalogInput distanceSensor;
 
     public static double kP = 3;
     public static PIDCoefficients rotVal = new PIDCoefficients(4,0,0);
@@ -51,7 +50,7 @@ public class DriveSubsystem {
         rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightBack"));
         frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "rightFront"));
 
-        distanceSensor = hardwareMap.get(AnalogInput.class, "distanceSensor");
+
 
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -153,23 +152,5 @@ public class DriveSubsystem {
 
     }
 
-    public double getRawDistance() {
-        double rawVoltage = distanceSensor.getVoltage();
-        double reading = rawVoltage*  542.1822921180930552;
-        if (rawVoltage > 1.4823) { //1.4823 volts is about 144 inches, the width of the field.  If the volate is greater then this, there must have been a faulty reading
-            rawVoltage = lastVoltage; //use last distance instead of new one.
-        } else if(reading < 70 || reading > 82){
-            rawVoltage = lastVoltage;
-            reading = rawVoltage * 542.1822921180930552;
-        }else{
-            lastVoltage = rawVoltage;
-        }
-
-        //Constants gotten from getting the true distance from distance sensor to wall via tape measure,
-        //then (distance/voltage) got the values in inches, then converted that to other distance units
-
-        return reading;
-
-    }
 
 }

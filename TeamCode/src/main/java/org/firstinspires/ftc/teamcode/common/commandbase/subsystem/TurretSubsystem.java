@@ -20,8 +20,8 @@ public class TurretSubsystem extends SubsystemBase {
     public static double I = 0.0;
     public static double D = 0.00025;
 
-    public static double maxVel = 2400; //2500
-    public static double maxAcc = 1800; //1900
+    public static double maxVel = 4200; //5400 //2500
+    public static double maxAcc = 3600; //1900
 
     private ElapsedTime voltageTimer;
     private VoltageSensor voltageSensor;
@@ -45,7 +45,7 @@ public class TurretSubsystem extends SubsystemBase {
 
         controller = new ProfiledPIDController(P,I,D, new TrapezoidProfile.Constraints(maxVel,maxAcc));
         controller.setPID(P, I, D);
-        controller.setTolerance(20,20);
+        controller.setTolerance(20,10); //20 10
 
         this.voltageTimer = new ElapsedTime();
         voltageTimer.reset();

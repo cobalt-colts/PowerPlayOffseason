@@ -7,6 +7,7 @@ import androidx.annotation.GuardedBy;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -22,7 +23,11 @@ import org.firstinspires.ftc.teamcode.common.commandbase.subsystem.VerticalSubsy
 import org.firstinspires.ftc.teamcode.common.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.common.vision.AprilTagDetector;
 
+import java.util.List;
+
 public class Robot {
+
+    List<LynxModule> allHubs;
 
     public AprilTagDetector vision;
     public TurretSubsystem turret;
@@ -44,6 +49,10 @@ public class Robot {
     private boolean autoPickup = false;
 
     public Robot(HardwareMap hardwareMap, Telemetry telemetry, boolean isAuto){
+
+        allHubs = hardwareMap.getAll(LynxModule.class);
+        for(LynxModule hub : allHubs) hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+
         this.telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         vision  = new AprilTagDetector();
         this.isAuto = isAuto;
@@ -108,7 +117,6 @@ public class Robot {
         turret.read();
         vertical.read();
         sensor.read();
-        telemetry.addData("uS position: ", drive.getRawDistance());
 //        telemetry.addData("Receiver Open: ", sensor.getCurrState());
 //        telemetry.addData("Turret Pos: ", turret.getPos());
 //        telemetry.addData("Turret Goal: ", turret.getTargetPosition());
@@ -133,6 +141,12 @@ public class Robot {
         vertical.write();
         horizontal.write();
         sensor.write();
+
+        for(LynxModule hub: allHubs){
+            hub.clearBulkCache();
+        }
+
+
     }
 
     public void reset(){
