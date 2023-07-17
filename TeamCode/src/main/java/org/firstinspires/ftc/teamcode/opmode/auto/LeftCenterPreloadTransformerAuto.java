@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
+import com.arcrobotics.ftclib.command.WaitUntilCommand;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ProfiledPIDController;
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
@@ -18,6 +19,7 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.common.commandbase.auto.GrabTransformerCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftCenterPreloadTransformerCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.left.LeftAutoMidCycleCommand;
 import org.firstinspires.ftc.teamcode.common.commandbase.auto.LeftCenterPreloadCommand;
@@ -40,7 +42,7 @@ public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
     }
     Location location = Location.MIDDLE;
 
-    public static int goal = 79;
+    public static int goal = 73;
 
     public double headingOffset = 0;
     public double robotHeading = 0;
@@ -56,7 +58,7 @@ public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
     public static int max_vel = 30;
     public static int max_acc = 30;
     public static PIDController rot;
-    public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.3,0.005,0.02);
+    public static PIDCoefficients fwdVal = new PIDCoefficients(0.05,0,0.02), rotVal = new PIDCoefficients(-2,0,0), strVal = new PIDCoefficients(0.1,0.005,0.02);
     public double voltage = 12;
 
     public boolean preload = false;
@@ -77,7 +79,7 @@ public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
 
         fwd = new ProfiledPIDController(fwdVal.p, fwdVal.i, fwdVal.d, new TrapezoidProfile.Constraints(max_vel,max_acc));
         rot = new PIDController(rotVal.p, rotVal.i, rotVal.d);
-        str = new ProfiledPIDController(strVal.p, strVal.i, strVal.d, new TrapezoidProfile.Constraints(30,20)); //40
+        str = new ProfiledPIDController(strVal.p, strVal.i, strVal.d, new TrapezoidProfile.Constraints(20,20)); //40
 
         et = new ElapsedTime();
 
@@ -129,7 +131,10 @@ public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
                         //cycle
 
                         new LeftCenterPreloadTransformerCommand(robot),
-                        new InstantCommand(() -> preload = true)
+                        new InstantCommand(() -> preload = true),
+                        new WaitUntilCommand(() -> currFwd > 80 && currStr > 50),
+                        new GrabTransformerCommand(robot),
+                        new InstantCommand(() -> goPark = true)
 //                        new ParallelCommandGroup(
 //                                new InstantCommand(() -> goPark()),
 //                                new VerticalPositionCommand(robot.vertical,0,30,5000),
@@ -160,26 +165,24 @@ public class LeftCenterPreloadTransformerAuto extends LinearOpMode {
             if (preload){ //scored preload
 
 
-                moveRobot((currStr > 45) ? 85 : 80, 50);
+                //moveRobot((currStr > 45) ? 85 : 75, 50);
                 //go to (52,0) -> (75,0), (75,50), (80,50)
-                if(currFwd > 83 && !transformer){
-                    transformer = true;
-                    CommandScheduler.getInstance().schedule(
-                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.ACTIVE)),
-                            new WaitCommand(200),
-                            new HorizontalPositionCommand(robot.horizontal,0.2),
-                            new WaitCommand(200),
-                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.CLOSED)),
-                            new WaitCommand(200),
-                            new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.STOW))
-                                    .andThen(new HorizontalPositionCommand(robot.horizontal,0)
-                                            .andThen(new InstantCommand(() -> goPark = true)))
-
-                    );
-                }
+//                if(currFwd > 83 && !transformer){
+//                    transformer = true;
+//                    CommandScheduler.getInstance().reset();
+//                    CommandScheduler.getInstance().schedule(
+//                            new GrabTransformerCommand(robot)
+//                                    .andThen(new HorizontalPositionCommand(robot.horizontal,0)
+//                                            .andThen(new InstantCommand(() -> goPark = true)))
+//
+//                    );
+//                }
 
                 if(goPark){ //goPark
-                    moveRobot(goal, location == Location.LEFT ? 50 : (location == Location.MIDDLE) ? 25 : 0);
+                    if(currFwd > 80) moveRobot(75,55);
+                    else moveRobot(goal - 2, location == Location.LEFT ? -24 : (location == Location.MIDDLE) ? -50 : -72); //48 22 0
+                }else{
+                    moveRobot((currStr > 45) ? 85 : 75, 55);
                 }
                 //Center Auto parking is weird. L,M,R corresponds to 1,2,3 signal zones
 

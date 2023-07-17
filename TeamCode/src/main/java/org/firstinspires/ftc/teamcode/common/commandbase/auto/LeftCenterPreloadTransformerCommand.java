@@ -35,13 +35,14 @@ public class LeftCenterPreloadTransformerCommand extends SequentialCommandGroup 
                                 .andThen(new InstantCommand((() -> robot.intake.update(IntakeSubsystem.ClawState.OPEN))))
                                 .andThen(new WaitCommand(500)),
 
-                        new ParallelCommandGroup(
+
                                 new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.STOW)),
                                 new HorizontalPositionCommand(robot.horizontal,0),
-                                new VerticalPositionCommand(robot.vertical,0,30,5000),
+                                new WaitCommand(300),
+                                new VerticalPositionCommand(robot.vertical,100,30,5000),
                                 new TurretPositionCommand(robot.turret,-800,30,5000)
 
-                        )
+
                 )
         );
     }

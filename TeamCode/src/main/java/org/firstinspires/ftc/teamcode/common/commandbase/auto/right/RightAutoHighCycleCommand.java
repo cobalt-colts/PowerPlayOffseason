@@ -23,7 +23,8 @@ public class RightAutoHighCycleCommand extends SequentialCommandGroup {
                         new WaitUntilCommand(() -> robot.vertical.getPos() > stackHeight + 200),
                         new InstantCommand(() -> robot.intake.update(IntakeSubsystem.WristState.SLIGHT)),
                         new HorizontalPositionCommand(robot.horizontal,0.05),
-                        new TurretPositionCommand(robot.turret,-520,0,5000),
+                        new WaitCommand(200),
+                        new TurretPositionCommand(robot.turret,-550,0,5000),
                         //new WaitUntilCommand(() -> robot.turret.getPos() > -300), //@TODO fix
 
                         //.andThen(new WaitCommand(500)),
@@ -43,7 +44,7 @@ public class RightAutoHighCycleCommand extends SequentialCommandGroup {
                         new VerticalPositionCommand(robot.vertical, stackHeight,0,5000),
                         new WaitUntilCommand(() -> robot.vertical.controller.atGoal() && robot.turret.controller.atGoal()),
                         //swapped 42/43 with 45
-                        new HorizontalPositionCommand(robot.horizontal,0.36).andThen(new WaitCommand(400)),
+                        new HorizontalPositionCommand(robot.horizontal,0.32).andThen(new WaitCommand(400)),
 
 
                         new InstantCommand(() -> robot.intake.update(IntakeSubsystem.ClawState.CLOSED)).andThen(new WaitCommand(200))

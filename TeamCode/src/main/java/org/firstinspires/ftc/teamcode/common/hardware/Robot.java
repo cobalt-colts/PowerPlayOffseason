@@ -126,6 +126,16 @@ public class Robot {
 
     }
 
+    public void loop(boolean auto, boolean overrideTurret){
+        //if(isAuto) drive.update();
+
+        //if auto is true, then we enable PID control
+        turret.loop(overrideTurret);
+        vertical.loop(auto);
+        horizontal.loop();
+
+    }
+
     public void loop(boolean auto){
         //if(isAuto) drive.update();
 

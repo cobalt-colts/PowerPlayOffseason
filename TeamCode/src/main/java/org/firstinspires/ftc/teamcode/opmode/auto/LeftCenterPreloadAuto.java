@@ -54,7 +54,7 @@ public class LeftCenterPreloadAuto extends LinearOpMode {
     public static int max_vel = 30;
     public static int max_acc = 30;
     public static PIDController rot;
-    public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.3,0.005,0.02);
+    public static PIDCoefficients fwdVal = new PIDCoefficients(0.05,0,0.02), rotVal = new PIDCoefficients(-2,0,0), strVal = new PIDCoefficients(0.1,0.005,0.02);
     public double voltage = 12;
 
     public boolean preload = false;

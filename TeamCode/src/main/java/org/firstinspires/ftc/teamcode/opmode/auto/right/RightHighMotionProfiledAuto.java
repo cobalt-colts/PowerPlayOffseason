@@ -36,7 +36,7 @@ public class RightHighMotionProfiledAuto extends LinearOpMode {
     }
     Location location = Location.MIDDLE;
 
-    public static int goal = 49;
+    public static int goal = 50;
 
     public double headingOffset = 0;
     public double robotHeading = 0;
@@ -52,7 +52,7 @@ public class RightHighMotionProfiledAuto extends LinearOpMode {
     public static int max_vel = 50;
     public static int max_acc = 50;
     public static PIDController rot;
-    public static PIDCoefficients fwdVal = new PIDCoefficients(0.07,0,0.02), rotVal = new PIDCoefficients(-3,0,0), strVal = new PIDCoefficients(0.3,0.005,0.02);
+    public static PIDCoefficients fwdVal = new PIDCoefficients(0.05,0,0.02), rotVal = new PIDCoefficients(-2,0,0), strVal = new PIDCoefficients(0.1,0.005,0.02);
     public double voltage = 12;
     private double loopTime;
     private double endTime;
@@ -134,7 +134,7 @@ public class RightHighMotionProfiledAuto extends LinearOpMode {
         );
 
 
-        while(et.seconds() < 2){
+        while(et.seconds() < 4){
             robot.read();
 
             robot.vertical.setTargetPos(1530);
